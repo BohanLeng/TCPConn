@@ -4,16 +4,15 @@
 
 #include "TCPServerImpl.h"
 #include "TCPConnImpl.h"
-#include "TCPServer.h"
-
+#include "LogMacros.h"
 
 namespace TCPConn {
 
     /* ----- ITCPServer ----- */
 
-    ITCPServer::ITCPServer(uint16_t port) : _port(port)
+    ITCPServer::ITCPServer(uint16_t port) 
     {
-        pimpl = std::make_unique<TCPServerImpl>(*this, _port);
+        pimpl = std::make_unique<TCPServerImpl>(*this, port);
     }
     
     ITCPServer::~ITCPServer() {
@@ -27,29 +26,24 @@ namespace TCPConn {
     void ITCPServer::Stop() {
         pimpl->Stop();
     }
-    
-    void ITCPServer::WaitForClientConnection() {
-        pimpl->WaitForClientConnection();
-    }
 
-    void ITCPServer::MessageClient(std::shared_ptr<ITCPConn> client, const TCPMsg &msg) {
+    void ITCPServer::MessageClient(std::shared_ptr<ITCPConn> client, const TCPMsg& msg) {
         pimpl->MessageClient(client, msg);
     }
 
-    void ITCPServer::MessageAllClients(const TCPMsg &msg, std::shared_ptr<ITCPConn> pIgnoreClient) {
+    void ITCPServer::MessageAllClients(const TCPMsg& msg, std::shared_ptr<ITCPConn> pIgnoreClient) {
         pimpl->MessageAllClients(msg, pIgnoreClient);
     }
 
-    void ITCPServer::Update(size_t nMaxMessages) {
-        pimpl->Update(nMaxMessages);
+    void ITCPServer::Update(size_t nMaxMessages, bool bWait) {
+        pimpl->Update(nMaxMessages, bWait);
     }
 
+    
     /* ----- TCPServerImpl ----- */
 
-    TCPServerImpl::TCPServerImpl(ITCPServer &interface, uint16_t port)
-            : _interface(interface), m_acceptor(m_context, ip::tcp::endpoint(ip::tcp::v4(), port))
-    {
-        
+    TCPServerImpl::TCPServerImpl(ITCPServer& interface, uint16_t port)
+            : _interface(interface), m_acceptor(m_context, ip::tcp::endpoint(ip::tcp::v4(), port)) {
     }
     
     TCPServerImpl::~TCPServerImpl() {
@@ -59,15 +53,13 @@ namespace TCPConn {
     bool TCPServerImpl::Start() {
         try {
             WaitForClientConnection();
-
             m_thrContext = std::thread([this]() { m_context.run(); });
         }
-        catch (std::exception &e) {
-            std::cerr << "[SERVER] Exception: " << e.what() << std::endl;
+        catch (std::exception& e) {
+            ERROR_MSG("[SERVER] Exception: %s", e.what());
             return false;
         }
-
-        std::cout << "[SERVER] Started!" << std::endl;
+        INFO_MSG("[SERVER] Started!");
         return true;
     }
 
@@ -76,7 +68,7 @@ namespace TCPConn {
         if (m_thrContext.joinable()) {
             m_thrContext.join();
         }
-        std::cout << "[SERVER] Stopped!" << std::endl;
+        INFO_MSG("[SERVER] Stopped!");
         return true;
     }
 
@@ -84,25 +76,24 @@ namespace TCPConn {
         m_acceptor.async_accept(
                 [this](std::error_code ec, ip::tcp::socket socket) {
                     if (!ec) {
-                        std::cout << "[SERVER] New Connection: " << socket.remote_endpoint() << std::endl;
-                        struct ITCPConn::TCPContext tcp_context{m_context, std::move(socket)};
+                        INFO_MSG("[SERVER] New Connection: %s", socket.remote_endpoint().address().to_string().c_str());
+                        struct ITCPConn::TCPContext tcp_context{ m_context, std::move(socket) };
                         auto new_conn = std::make_shared<ITCPConn>(ITCPConn::EOwner::server, tcp_context, m_qMessagesIn);
                         if (_interface.OnClientConnected(new_conn)) {
                             m_deqConns.push_back(std::move(new_conn));
                             m_deqConns.back()->ConnectToClient(m_idCounter++);
-                            std::cout << '[' << m_deqConns.back()->GetID() << "] Connection Approved" << std::endl;
+                            INFO_MSG("[%d] Connection approved.", m_deqConns.back()->GetID());
                         } 
                         else
-                            std::cout << "[SERVER] Interface Expired" << std::endl;
+                            INFO_MSG("[SERVER] Connection denied!");
                     } else {
-                        std::cout << "[SERVER] New Connection Error: " << ec.message() << std::endl;
+                        ERROR_MSG("[SERVER] New connection error: %s", ec.message().c_str());
                     }
                     WaitForClientConnection();
-
                 });
     }
 
-    void TCPServerImpl::MessageClient(std::shared_ptr<ITCPConn> client, const TCPMsg &msg) {
+    void TCPServerImpl::MessageClient(std::shared_ptr<ITCPConn> client, const TCPMsg& msg) {
         if (client && client->IsConnected()) {
             client->Send(msg);
         } else {
@@ -115,9 +106,9 @@ namespace TCPConn {
         }
     }
 
-    void TCPServerImpl::MessageAllClients(const TCPMsg &msg, std::shared_ptr<ITCPConn> pIgnoreClient) {
+    void TCPServerImpl::MessageAllClients(const TCPMsg& msg, std::shared_ptr<ITCPConn> pIgnoreClient) {
         bool bInvalidClientExists = false;
-        for (auto &client: m_deqConns) {
+        for (auto& client: m_deqConns) {
             if (client && client->IsConnected()) {
                 if (client != pIgnoreClient) {
                     client->Send(msg);
@@ -135,7 +126,8 @@ namespace TCPConn {
         }
     }
 
-    void TCPServerImpl::Update(size_t nMaxMessages) {
+    void TCPServerImpl::Update(size_t nMaxMessages, bool bWait) {
+        if (bWait) m_qMessagesIn.wait();
         size_t nMessageCount = 0;
         while (nMessageCount < nMaxMessages && !m_qMessagesIn.empty()) {
             auto msg = m_qMessagesIn.pop_front();
@@ -143,7 +135,5 @@ namespace TCPConn {
             nMessageCount++;
         }
     }
-
-
-
+    
 } // TCPConn

@@ -24,13 +24,13 @@ namespace TCPConn {
     class TCPConnImpl {
     public:
         TCPConnImpl(ITCPConn& interface, ITCPConn::EOwner owner, 
-                    struct ITCPConn::TCPContext &context, TCPMsgQueue<TCPMsgOwned> &qIn);
+                    struct ITCPConn::TCPContext& context, TCPMsgQueue<TCPMsgOwned>& qIn);
         virtual ~TCPConnImpl();
 
         [[nodiscard]] uint32_t GetID() const;
 
         void ConnectToClient(uint32_t uid = 0);
-        void ConnectToServer(const struct ITCPConn::TCPEndpoint &endpoint);
+        void ConnectToServer(const struct ITCPConn::TCPEndpoint& endpoint);
         void Disconnect();
         [[nodiscard]] bool IsConnected() const;
 
@@ -40,13 +40,13 @@ namespace TCPConn {
         void WriteBody();
         void AddToIncomingMessageQueue();
 
-        bool Send(const TCPMsg &msg);
+        void Send(const TCPMsg &msg);
 
     protected:
         ip::tcp::socket m_socket;
-        io_context &m_context;
+        io_context& m_context;
         TCPMsgQueue<TCPMsg> m_qMessagesOut;
-        TCPMsgQueue<TCPMsgOwned> &m_qMessagesIn;
+        TCPMsgQueue<TCPMsgOwned>& m_qMessagesIn;
         TCPMsg m_msgTemporaryIn;
         ITCPConn::EOwner m_nOwnerType;
         uint32_t id = 0;

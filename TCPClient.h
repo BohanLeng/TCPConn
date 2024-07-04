@@ -5,8 +5,6 @@
 #ifndef ZMONITOR_TCPCLIENT_H
 #define ZMONITOR_TCPCLIENT_H
 
-
-
 #include "TCPConn.h"
 
 namespace TCPConn {
@@ -18,14 +16,24 @@ namespace TCPConn {
         ITCPClient();
         virtual ~ITCPClient();
         
+        /// \brief Connect to a server
+        /// \param host server address or domain name
+        /// \param port server port
         bool Connect(const std::string& host, uint16_t port);
         
+        /// \brief Disconnect from the server, will be called automatically on destruction
         void Disconnect();
         
+        /// \brief Check if the client is connected
+        /// \return true if the socket is open
         bool IsConnected();
         
+        /// \brief Send a message to the server
+        /// \param msg message to send
         void Send(const TCPMsg& msg);
         
+        /// \brief Get the incoming message queue
+        /// \return reference to the incoming message queue
         TCPMsgQueue<TCPMsgOwned>& Incoming();
         
     private:

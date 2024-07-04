@@ -14,30 +14,32 @@ namespace TCPConn {
     class TCPMsgQueue {
     public:
         TCPMsgQueue() = default;
-
-        TCPMsgQueue(const TCPMsgQueue<T> &) = delete;
-
+        TCPMsgQueue(const TCPMsgQueue<T>&) = delete;
         virtual ~TCPMsgQueue() { clear(); }
 
     public:
-        const T &front() {
+        const T& front() {
             std::scoped_lock lock(m_mutex);
             return m_queue.front();
         }
 
-        const T &back() {
+        const T& back() {
             std::scoped_lock lock(m_mutex);
             return m_queue.back();
         }
 
-        void push_back(const T &item) {
+        void push_back(const T& item) {
             std::scoped_lock lock(m_mutex);
             m_queue.emplace_back(std::move(item));
+            std::unique_lock<std::mutex> ul(m_mtxBlocking);
+            m_cvBlocking.notify_one();
         }
 
-        void push_front(const T &item) {
+        void push_front(const T& item) {
             std::scoped_lock lock(m_mutex);
             m_queue.emplace_front(std::move(item));
+            std::unique_lock<std::mutex> ul(m_mtxBlocking);
+            m_cvBlocking.notify_one();
         }
 
         bool empty() {
@@ -68,10 +70,19 @@ namespace TCPConn {
             m_queue.pop_back();
             return item;
         }
+        
+        void wait() {
+            while (empty()) {
+                std::unique_lock<std::mutex> ul(m_mtxBlocking);
+                m_cvBlocking.wait(ul);
+            }
+        }
 
     protected:
         std::mutex m_mutex;
         std::deque<T> m_queue;
+        std::condition_variable m_cvBlocking;
+        std::mutex m_mtxBlocking;
     };
 
 } // TCPConn

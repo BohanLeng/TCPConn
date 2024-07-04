@@ -16,18 +16,15 @@ namespace TCPConn {
     class TCPClientImpl {
     public:
         TCPClientImpl();
-
         virtual ~TCPClientImpl();
 
-        bool Connect(const std::string &host, uint16_t port);
-
+        bool Connect(const std::string& host, uint16_t port);
         void Disconnect();
-
         bool IsConnected();
 
-        void Send(const TCPMsg &msg);
+        void Send(const TCPMsg& msg);
 
-        TCPMsgQueue<TCPMsgOwned> &Incoming();
+        TCPMsgQueue<TCPMsgOwned>& Incoming();
 
     protected:
         io_context m_context;

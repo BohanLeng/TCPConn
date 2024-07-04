@@ -7,48 +7,44 @@
 
 #include <cstdint>
 #include <vector>
-#include <iostream>
+#include <memory>
 
 namespace TCPConn {
-
+    
     struct TCPMsgHeader {
-        uint32_t id{};
-        uint32_t size = 0;
+        uint32_t type;
+        uint32_t size{};
     };
 
     struct TCPMsg {
         TCPMsgHeader header{};
         std::vector<uint8_t> body;
 
-        size_t size() const {
+        [[nodiscard]] size_t size() const {
             return sizeof(TCPMsgHeader) + body.size();
         }
 
-        friend std::ostream &operator<<(std::ostream &os, const TCPMsg &msg) {
-            os << "ID: " << int(msg.header.id) << " Size: " << msg.header.size;
-            return os;
-        }
-
-        template<typename DataType>
-        friend TCPMsg &operator<<(TCPMsg &msg, const DataType &data) {
-            static_assert(std::is_standard_layout<DataType>::value, "Data is too complex to be pushed into vector");
+        template <typename T>
+        friend TCPMsg& operator << (TCPMsg& msg, const T& data) {
+            static_assert(std::is_standard_layout<T>::value, 
+                    "Data is too complex to be pushed into vector");
             size_t size = msg.body.size();
-            msg.body.resize(size + sizeof(DataType));
-            std::memcpy(msg.body.data() + size, &data, sizeof(DataType));
+            msg.body.resize(size + sizeof(T));
+            std::memcpy(msg.body.data() + size, &data, sizeof(T));
             msg.header.size = msg.size();
             return msg;
         }
 
-        template<typename DataType>
-        friend TCPMsg &operator>>(TCPMsg &msg, DataType &data) {
-            static_assert(std::is_standard_layout<DataType>::value, "Data is too complex to be pushed into vector");
-            size_t size = msg.body.size() - sizeof(DataType);
-            std::memcpy(&data, msg.body.data() + size, sizeof(DataType));
+        template <typename T>
+        friend TCPMsg& operator >> (TCPMsg& msg, T& data) {
+            static_assert(std::is_standard_layout<T>::value, 
+                    "Data is too complex to be pushed into vector");
+            size_t size = msg.body.size() - sizeof(T);
+            std::memcpy(&data, msg.body.data() + size, sizeof(T));
             msg.body.resize(size);
             msg.header.size = msg.size();
             return msg;
         }
-
     };
 
     class ITCPConn;
@@ -57,17 +53,11 @@ namespace TCPConn {
         std::shared_ptr<ITCPConn> remote = nullptr;
         TCPMsg msg;
 
-        uint32_t size() const {
+        [[nodiscard]] uint32_t size() const {
             return msg.size();
-        }
-
-        friend std::ostream &operator<<(std::ostream &os, const TCPMsgOwned &msg) {
-            os << msg.msg;
-            return os;
         }
     };
 
 } // TCPCon
-
 
 #endif //ZMONITOR_TCPMSG_H

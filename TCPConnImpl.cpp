@@ -3,16 +3,13 @@
 //
 
 #include "TCPConnImpl.h"
-
-#include <utility>
-#include "TCPConn.h"
-
+#include "LogMacros.h"
 
 namespace TCPConn {
 
     /* ----- ITCPConn ----- */
     
-    ITCPConn::ITCPConn(EOwner owner, struct TCPContext &context, TCPMsgQueue<TCPMsgOwned> &qIn)
+    ITCPConn::ITCPConn(EOwner owner, struct TCPContext& context, TCPMsgQueue<TCPMsgOwned>& qIn)
     {
         pimpl = std::make_unique<TCPConnImpl>(*this, owner, context, qIn);
     }
@@ -27,7 +24,7 @@ namespace TCPConn {
         pimpl->ConnectToClient(uid);
     }
     
-    void ITCPConn::ConnectToServer(const struct TCPEndpoint &endpoint) {
+    void ITCPConn::ConnectToServer(const struct TCPEndpoint& endpoint) {
         pimpl->ConnectToServer(endpoint);
     }
     
@@ -35,44 +32,23 @@ namespace TCPConn {
         pimpl->Disconnect();
     }
     
-    bool ITCPConn::IsConnected() {
+    bool ITCPConn::IsConnected() const {
         return pimpl->IsConnected();
     }
     
-    bool ITCPConn::Send(const TCPMsg &msg) {
-        return pimpl->Send(msg);
-    }
-    
-    void ITCPConn::ReadHeader() {
-        pimpl->ReadHeader();
-    }
-    
-    void ITCPConn::ReadBody() {
-        pimpl->ReadBody();
-    }
-    
-    void ITCPConn::WriteHeader() {
-        pimpl->WriteHeader();
-    }
-    
-    void ITCPConn::WriteBody() {
-        pimpl->WriteBody();
-    }
-    
-    void ITCPConn::AddToIncomingMessageQueue() {
-        pimpl->AddToIncomingMessageQueue();
+    void ITCPConn::Send(const TCPMsg& msg) {
+        pimpl->Send(msg);
     }
 
+    
     /* ----- TCPConnImpl ----- */
     
-    TCPConnImpl::TCPConnImpl(ITCPConn &interface, ITCPConn::EOwner owner, ITCPConn::TCPContext &context, TCPMsgQueue<TCPMsgOwned> &qIn)
+    TCPConnImpl::TCPConnImpl(ITCPConn& interface, ITCPConn::EOwner owner, ITCPConn::TCPContext& context, TCPMsgQueue<TCPMsgOwned>& qIn)
         : _interface(interface), m_context(context.context), m_socket(std::move(context.socket)), m_qMessagesIn(qIn)
     {
         m_nOwnerType = owner;
     }
-
-
-
+    
     TCPConnImpl::~TCPConnImpl() = default;
 
     uint32_t TCPConnImpl::GetID() const {
@@ -85,27 +61,28 @@ namespace TCPConn {
                 id = uid;
                 ReadHeader();
             }
-        }
+        } else
+            ERROR_MSG("Cannot connect client to client...");
     }
 
-    void TCPConnImpl::ConnectToServer(const struct ITCPConn::TCPEndpoint &endpoint)  {
+    void TCPConnImpl::ConnectToServer(const struct ITCPConn::TCPEndpoint& endpoint)  {
         if (m_nOwnerType == ITCPConn::EOwner::client) {
             async_connect(m_socket, endpoint.endpoint,
                           [this](std::error_code ec, ip::tcp::endpoint endpoint) {
                               if (!ec) {
                                   ReadHeader();
                               } else {
-                                  std::cout << "[" << id << "] Connect Fail.\n";
+                                  INFO_MSG("[%d] Connect fail.", id);
                                   m_socket.close();
                               }
                           });
-        }
+        } else
+            ERROR_MSG("Cannot connect server to server...");
     }
 
     void TCPConnImpl::Disconnect()  {
-        if (IsConnected()) {
+        if (IsConnected()) 
             post(m_context, [this]() { m_socket.close(); });
-        }
     }
 
     bool TCPConnImpl::IsConnected() const  {
@@ -123,7 +100,7 @@ namespace TCPConn {
                                AddToIncomingMessageQueue();
                            }
                        } else {
-                           std::cout << "[" << id << "] Read Header Fail.\n";
+                           INFO_MSG("[%d] Read header fail, closing.", id);
                            m_socket.close();
                        }
                    });
@@ -135,7 +112,7 @@ namespace TCPConn {
                        if (!ec) {
                            AddToIncomingMessageQueue();
                        } else {
-                           std::cout << "[" << id << "] Read Body Fail.\n";
+                           INFO_MSG("[%d] Read body fail, closing.", id);
                            m_socket.close();
                        }
                    });
@@ -154,7 +131,7 @@ namespace TCPConn {
                                 }
                             }
                         } else {
-                            std::cout << "[" << id << "] Write Header Fail.\n";
+                            INFO_MSG("[%d] Write header fail, closing.", id);
                             m_socket.close();
                         }
                     });
@@ -169,7 +146,7 @@ namespace TCPConn {
                                 WriteHeader();
                             }
                         } else {
-                            std::cout << "[" << id << "] Write Body Fail.\n";
+                            INFO_MSG("[%d] Write body fail, closing.", id);
                             m_socket.close();
                         }
                     });
@@ -184,7 +161,7 @@ namespace TCPConn {
         ReadHeader();
     }
 
-    bool TCPConnImpl::Send(const TCPMsg &msg) {
+    void TCPConnImpl::Send(const TCPMsg& msg) {
         post(m_context,
              [this, msg]() {
                  bool bWritingMessage = !m_qMessagesOut.empty();
@@ -193,10 +170,6 @@ namespace TCPConn {
                      WriteHeader();
                  }
              });
-        return true;
-
     }
-
-
 
 } // TCPConn

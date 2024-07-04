@@ -18,16 +18,14 @@ namespace TCPConn {
         virtual ~TCPServerImpl();
 
         bool Start();
-
         bool Stop();
 
         void WaitForClientConnection();
 
-        void MessageClient(std::shared_ptr<ITCPConn> client, const TCPMsg &msg);
+        void MessageClient(std::shared_ptr<ITCPConn> client, const TCPMsg& msg);
+        void MessageAllClients(const TCPMsg& msg, std::shared_ptr<ITCPConn> pIgnoreClient = nullptr);
 
-        void MessageAllClients(const TCPMsg &msg, std::shared_ptr<ITCPConn> pIgnoreClient = nullptr);
-
-        void Update(size_t nMaxMessages = -1);
+        void Update(size_t nMaxMessages = -1, bool bWait = true);
 
     protected:
         TCPMsgQueue<TCPMsgOwned> m_qMessagesIn;

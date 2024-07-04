@@ -4,6 +4,7 @@
 
 #include "TCPClientImpl.h"
 #include "TCPConnImpl.h"
+#include "LogMacros.h"
 
 namespace TCPConn {
 
@@ -13,11 +14,9 @@ namespace TCPConn {
         pimpl = std::make_unique<TCPClientImpl>();
     }
     
-    ITCPClient::~ITCPClient() {
-        pimpl->Disconnect();
-    }
+    ITCPClient::~ITCPClient() = default;
     
-    bool ITCPClient::Connect(const std::string &host, const uint16_t port) {
+    bool ITCPClient::Connect(const std::string& host, const uint16_t port) {
         return pimpl->Connect(host, port);
     }
     
@@ -29,14 +28,15 @@ namespace TCPConn {
         return pimpl->IsConnected();
     }
     
-    void ITCPClient::Send(const TCPMsg &msg) {
+    void ITCPClient::Send(const TCPMsg& msg) {
         pimpl->Send(msg);
     }
     
-    TCPMsgQueue<TCPMsgOwned> &ITCPClient::Incoming() {
+    TCPMsgQueue<TCPMsgOwned>& ITCPClient::Incoming() {
         return pimpl->Incoming();
     }
 
+    
     /* ----- TCPClientImpl ----- */
 
     TCPClientImpl::TCPClientImpl()
@@ -46,7 +46,7 @@ namespace TCPConn {
         Disconnect();
     }
 
-    bool TCPClientImpl::Connect(const std::string &host, const uint16_t port) {
+    bool TCPClientImpl::Connect(const std::string& host, const uint16_t port) {
         try {
             ip::tcp::resolver resolver(m_context);
             ip::tcp::resolver::results_type endpoint = resolver.resolve(host, std::to_string(port));
@@ -58,8 +58,8 @@ namespace TCPConn {
             m_connection->ConnectToServer(tcp_endpoint);
 
             m_thrContext = std::thread([this]() { m_context.run(); });
-        } catch (std::exception &e) {
-            std::cerr << "Client Exception: " << e.what() << std::endl;
+        } catch (std::exception& e) {
+            ERROR_MSG("Client Exception: %s", e.what());
             return false;
         }
         return true;
@@ -77,20 +77,14 @@ namespace TCPConn {
     }
 
     bool TCPClientImpl::IsConnected() {
-        if (m_connection) {
-            return m_connection->IsConnected();
-        } else {
-            return false;
-        }
+        return m_connection ? m_connection->IsConnected() : false;
     }
 
-    void TCPClientImpl::Send(const TCPMsg &msg) {
-        if (IsConnected()) {
-            m_connection->Send(msg);
-        }
+    void TCPClientImpl::Send(const TCPMsg& msg) {
+        if (IsConnected()) m_connection->Send(msg);
     }
 
-    TCPMsgQueue<TCPMsgOwned> &TCPClientImpl::Incoming() {
+    TCPMsgQueue<TCPMsgOwned>& TCPClientImpl::Incoming() {
         return m_qMessagesIn;
     }
 

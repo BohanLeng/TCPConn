@@ -36,32 +36,51 @@ namespace TCPConn {
 
     class TCPCONN_API ITCPConn : public std::enable_shared_from_this<ITCPConn> {
     public:
+        
+        /// \brief Creator of the connection 
         enum class EOwner {
             server,
             client
         };
 
+        /// \brief Wrapper for asio tcp context reference and socket
         struct TCPContext;
+        
+        /// \brief Wrapper for asio tcp endpoint
         struct TCPEndpoint;
         
-        ITCPConn(EOwner owner, struct TCPContext &context, TCPMsgQueue<TCPMsgOwned> &qIn);
+        
+        /// \brief Constructor
+        /// \param owner owner of the connection, either server or client
+        /// \param context asio tcp context reference and socket
+        /// \param qIn reference to the incoming message queue of owner
+        ITCPConn(EOwner owner, struct TCPContext& context, TCPMsgQueue<TCPMsgOwned>& qIn);
         virtual ~ITCPConn();
 
+        /// \brief Get the connection ID managed by server
+        /// \return connection ID
         [[nodiscard]] uint32_t GetID() const;
 
+        
+        /// \brief For server to call, connect to a client and start receiving messages
+        /// \param uid client ID to assign to this connection
         void ConnectToClient(uint32_t uid = 0);
-        void ConnectToServer(const struct TCPEndpoint &endpoint);
+        
+        /// \brief For client to call, connect to a server
+        /// \param endpoint server endpoint to connect
+        void ConnectToServer(const struct TCPEndpoint& endpoint);
+        
+        /// \brief Disconnect the connection
         void Disconnect();
-        [[nodiscard]] bool IsConnected();
+        
+        /// \brief Check if the connection is open
+        /// \return true if the connection is open
+        [[nodiscard]] bool IsConnected() const;
 
-        bool Send(const TCPMsg &msg);
-
-        void ReadHeader();
-        void ReadBody();
-        void WriteHeader();
-        void WriteBody();
-
-        void AddToIncomingMessageQueue();
+        
+        /// \brief Send a message to the other end
+        /// \param msg message to send
+        void Send(const TCPMsg& msg);
         
     private:
         std::unique_ptr<TCPConnImpl> pimpl;

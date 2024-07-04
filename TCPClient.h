@@ -35,7 +35,17 @@ namespace TCPConn {
         /// \brief Get the incoming message queue
         /// \return reference to the incoming message queue
         TCPMsgQueue<TCPMsgOwned>& Incoming();
-        
+
+        /// \brief On connected to server
+        virtual void OnConnected() = 0;
+
+        /// \brief On disconnection from server
+        virtual void OnDisconnected() = 0;
+
+        /// \brief On message received, must be overridden
+        /// \param msg received message
+        virtual void OnMessage(TCPMsg& msg) = 0;
+
     private:
         std::unique_ptr<TCPClientImpl> pimpl;
     };

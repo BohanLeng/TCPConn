@@ -15,7 +15,7 @@ namespace TCPConn {
 
     class TCPClientImpl {
     public:
-        TCPClientImpl();
+        TCPClientImpl(ITCPClient& interface);
         virtual ~TCPClientImpl();
 
         bool Connect(const std::string& host, uint16_t port);
@@ -24,6 +24,8 @@ namespace TCPConn {
 
         void Send(const TCPMsg& msg);
 
+        void Update(size_t nMaxMessages = -1, bool bWait = true);
+
         TCPMsgQueue<TCPMsgOwned>& Incoming();
 
     protected:
@@ -31,9 +33,10 @@ namespace TCPConn {
         std::thread m_thrContext;
         ip::tcp::socket m_socket;
         std::unique_ptr<ITCPConn> m_connection;
+        TCPMsgQueue<TCPMsgOwned> m_qMessagesIn;
 
     private:
-        TCPMsgQueue<TCPMsgOwned> m_qMessagesIn;
+        ITCPClient& _interface;
     };
     
 } // TCPConn

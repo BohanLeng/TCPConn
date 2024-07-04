@@ -11,7 +11,7 @@ namespace TCPConn {
     /* ----- ITCPClient ----- */
 
     ITCPClient::ITCPClient() {
-        pimpl = std::make_unique<TCPClientImpl>();
+        pimpl = std::make_unique<TCPClientImpl>(*this);
     }
     
     ITCPClient::~ITCPClient() = default;
@@ -39,8 +39,8 @@ namespace TCPConn {
     
     /* ----- TCPClientImpl ----- */
 
-    TCPClientImpl::TCPClientImpl()
-        : m_socket(m_context) {}
+    TCPClientImpl::TCPClientImpl(ITCPClient& interface)
+        : _interface(interface), m_socket(m_context) {}
 
     TCPClientImpl::~TCPClientImpl() {
         Disconnect();
@@ -58,11 +58,12 @@ namespace TCPConn {
             m_connection->ConnectToServer(tcp_endpoint);
 
             m_thrContext = std::thread([this]() { m_context.run(); });
+            _interface.OnConnected();
+            return true;
         } catch (std::exception& e) {
             ERROR_MSG("Client Exception: %s", e.what());
             return false;
         }
-        return true;
     }
 
     void TCPClientImpl::Disconnect() {
@@ -74,6 +75,7 @@ namespace TCPConn {
             m_thrContext.join();
         }
         m_connection.release();
+        _interface.OnDisconnected();
     }
 
     bool TCPClientImpl::IsConnected() {
@@ -86,6 +88,16 @@ namespace TCPConn {
 
     TCPMsgQueue<TCPMsgOwned>& TCPClientImpl::Incoming() {
         return m_qMessagesIn;
+    }
+
+    void TCPClientImpl::Update(size_t nMaxMessages, bool bWait) {
+        if (bWait) m_qMessagesIn.wait();
+        size_t nMessageCount = 0;
+        while (nMessageCount < nMaxMessages && !m_qMessagesIn.empty()) {
+            auto msg = m_qMessagesIn.pop_front();
+            _interface.OnMessage(msg.msg);
+            nMessageCount++;
+        }
     }
 
 } // TCPConn

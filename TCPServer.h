@@ -42,11 +42,11 @@ namespace TCPConn {
         /// \brief On new connection, pending approval to establish connection
         /// \param client newly created socket pointer on server for this connection
         /// \return true to accept the connection, false to deny
-        virtual bool OnClientConnected(std::shared_ptr<ITCPConn> client) { return true; }
+        virtual bool OnClientConnected(std::shared_ptr<ITCPConn> client) = 0;
         
-        /// \brief On client disconnection, will be called on sending attempt to disconnected client
+        /// \brief On client disconnection, will be called on sending attempt to a already disconnected client
         /// \param client socket pointer to the disconnected client
-        virtual void OnClientDisconnected(std::shared_ptr<ITCPConn> client) {}
+        virtual void OnClientDisconnected(std::shared_ptr<ITCPConn> client) = 0;
         
         /// \brief On message received, must be overridden
         /// \param client socket pointer to the client that sent the message

@@ -3,10 +3,11 @@ cmake_minimum_required(VERSION 3.20)
 project(TCPConn)
 
 add_library(TCPConn SHARED TCPConnImpl.cpp TCPClientImpl.cpp TCPServerImp.cpp)
+target_compile_definitions(TCPConn PRIVATE TCPCONN_DLL)
+
 include_directories(${ROOT_DIR}/include)
 
 if (WIN32)
-    target_compile_definitions(TCPConn PRIVATE TCPCONN_DLL)
     set_target_properties(TCPConn PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
     add_definitions(-D_WIN32_WINNT=0x0A00)
     set(Boost_NO_WARN_NEW_VERSIONS 1)

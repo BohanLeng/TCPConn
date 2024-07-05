@@ -34,6 +34,7 @@ namespace TCPConn {
         ip::tcp::socket m_socket;
         std::unique_ptr<ITCPConn> m_connection;
         TCPMsgQueue<TCPMsgOwned> m_qMessagesIn;
+        bool m_bIsDestroying;
 
     private:
         ITCPClient& _interface;

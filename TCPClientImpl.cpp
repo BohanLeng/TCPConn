@@ -36,13 +36,18 @@ namespace TCPConn {
         return pimpl->Incoming();
     }
 
-    
+    void ITCPClient::Update(size_t nMaxMessages, bool bWait) {
+        pimpl->Update(nMaxMessages, bWait);
+    }
+
+
     /* ----- TCPClientImpl ----- */
 
     TCPClientImpl::TCPClientImpl(ITCPClient& interface)
         : _interface(interface), m_socket(m_context) {}
 
     TCPClientImpl::~TCPClientImpl() {
+        m_bIsDestroying = true;
         Disconnect();
     }
 
@@ -74,8 +79,8 @@ namespace TCPConn {
         if (m_thrContext.joinable()) {
             m_thrContext.join();
         }
-        m_connection.release();
-        _interface.OnDisconnected();
+        m_connection.reset();
+        if(!m_bIsDestroying) _interface.OnDisconnected();
     }
 
     bool TCPClientImpl::IsConnected() {

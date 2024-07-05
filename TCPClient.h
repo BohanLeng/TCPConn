@@ -35,6 +35,10 @@ namespace TCPConn {
         /// \brief Get the incoming message queue
         /// \return reference to the incoming message queue
         TCPMsgQueue<TCPMsgOwned>& Incoming();
+        
+        /// \brief Actively consume messages in the message queue
+        /// \param nMaxMessages maximum number of messages to consume, default is -1, consume all
+        void Update(size_t nMaxMessages = -1, bool bWait = true);
 
         /// \brief On connected to server
         virtual void OnConnected() = 0;

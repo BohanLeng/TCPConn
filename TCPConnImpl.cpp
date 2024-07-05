@@ -72,7 +72,7 @@ namespace TCPConn {
                               if (!ec) {
                                   ReadHeader();
                               } else {
-                                  INFO_MSG("[%d] Connect fail.", id);
+                                  INFO_MSG("[%d] Connect fail: %s", id, ec.message().c_str());
                                   m_socket.close();
                               }
                           });
@@ -89,12 +89,23 @@ namespace TCPConn {
         return m_socket.is_open();
     }
 
+    void TCPConnImpl::Send(const TCPMsg& msg) {
+        post(m_context,
+             [this, msg]() {
+                 bool bWritingMessage = !m_qMessagesOut.empty();
+                 m_qMessagesOut.push_back(msg);
+                 if (!bWritingMessage) {
+                     WriteHeader();
+                 }
+             });
+    }
+
     void TCPConnImpl::ReadHeader()  {
         async_read(m_socket, buffer(&m_msgTemporaryIn.header, sizeof(TCPMsgHeader)),
                    [this](std::error_code ec, std::size_t length) {
                        if (!ec) {
                            if (m_msgTemporaryIn.header.size > 0) {
-                               m_msgTemporaryIn.body.resize(m_msgTemporaryIn.header.size);
+                               m_msgTemporaryIn.body.resize(m_msgTemporaryIn.header.size - sizeof(TCPMsgHeader));
                                ReadBody();
                            } else {
                                AddToIncomingMessageQueue();
@@ -159,17 +170,6 @@ namespace TCPConn {
             m_qMessagesIn.push_back({nullptr, m_msgTemporaryIn});
         }
         ReadHeader();
-    }
-
-    void TCPConnImpl::Send(const TCPMsg& msg) {
-        post(m_context,
-             [this, msg]() {
-                 bool bWritingMessage = !m_qMessagesOut.empty();
-                 m_qMessagesOut.push_back(msg);
-                 if (!bWritingMessage) {
-                     WriteHeader();
-                 }
-             });
     }
 
 } // TCPConn

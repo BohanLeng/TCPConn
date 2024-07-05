@@ -20,7 +20,7 @@ namespace TCPConn {
         TCPMsgHeader header{};
         std::vector<uint8_t> body;
 
-        [[nodiscard]] size_t size() const {
+        [[nodiscard]] size_t full_size() const {
             return sizeof(TCPMsgHeader) + body.size();
         }
 
@@ -31,7 +31,7 @@ namespace TCPConn {
             size_t size = msg.body.size();
             msg.body.resize(size + sizeof(T));
             std::memcpy(msg.body.data() + size, &data, sizeof(T));
-            msg.header.size = msg.size();
+            msg.header.size = msg.full_size();
             return msg;
         }
 
@@ -42,7 +42,7 @@ namespace TCPConn {
             size_t size = msg.body.size() - sizeof(T);
             std::memcpy(&data, msg.body.data() + size, sizeof(T));
             msg.body.resize(size);
-            msg.header.size = msg.size();
+            msg.header.size = msg.full_size();
             return msg;
         }
     };
@@ -53,8 +53,8 @@ namespace TCPConn {
         std::shared_ptr<ITCPConn> remote = nullptr;
         TCPMsg msg;
 
-        [[nodiscard]] uint32_t size() const {
-            return msg.size();
+        [[nodiscard]] uint32_t full_size() const {
+            return msg.full_size();
         }
     };
 

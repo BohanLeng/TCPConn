@@ -18,7 +18,7 @@ namespace TCPConn {
         virtual ~TCPServerImpl();
 
         bool Start();
-        bool Stop();
+        void Stop();
 
         void WaitForClientConnection();
 

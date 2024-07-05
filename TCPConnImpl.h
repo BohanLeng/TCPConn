@@ -33,27 +33,29 @@ namespace TCPConn {
         void ConnectToServer(const struct ITCPConn::TCPEndpoint& endpoint);
         void Disconnect();
         [[nodiscard]] bool IsConnected() const;
+        
+        void Send(const TCPMsg &msg);
+
+    protected:
 
         void ReadHeader();
         void ReadBody();
         void WriteHeader();
         void WriteBody();
         void AddToIncomingMessageQueue();
-
-        void Send(const TCPMsg &msg);
-
-    protected:
+        
         ip::tcp::socket m_socket;
         io_context& m_context;
         TCPMsgQueue<TCPMsg> m_qMessagesOut;
         TCPMsgQueue<TCPMsgOwned>& m_qMessagesIn;
         TCPMsg m_msgTemporaryIn;
         ITCPConn::EOwner m_nOwnerType;
-        uint32_t id = 0;
+        uint32_t id = -1;
         
     private:
         ITCPConn& _interface;
     };
 
 } // TCPConn
+
 #endif //ZMONITOR_TCPCONNIMPL_H

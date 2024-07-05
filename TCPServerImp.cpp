@@ -63,13 +63,10 @@ namespace TCPConn {
         return true;
     }
 
-    bool TCPServerImpl::Stop() {
+    void TCPServerImpl::Stop() {
         m_context.stop();
-        if (m_thrContext.joinable()) {
-            m_thrContext.join();
-        }
+        if (m_thrContext.joinable()) m_thrContext.join();
         INFO_MSG("[SERVER] Stopped!");
-        return true;
     }
 
     void TCPServerImpl::WaitForClientConnection() {
@@ -107,11 +104,13 @@ namespace TCPConn {
     }
 
     void TCPServerImpl::MessageAllClients(const TCPMsg& msg, std::shared_ptr<ITCPConn> pIgnoreClient) {
+        DEBUG_MSG("[SERVER] Sending message to all clients...");
         bool bInvalidClientExists = false;
         for (auto& client: m_deqConns) {
             if (client && client->IsConnected()) {
                 if (client != pIgnoreClient) {
                     client->Send(msg);
+                    DEBUG_MSG("[SERVER] Message sent to [%d]", client->GetID());
                 }
             } else {
                 _interface.OnClientDisconnected(client);

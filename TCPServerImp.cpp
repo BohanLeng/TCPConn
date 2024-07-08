@@ -76,9 +76,10 @@ namespace TCPConn {
                         INFO_MSG("[SERVER] New Connection: %s", socket.remote_endpoint().address().to_string().c_str());
                         struct ITCPConn::TCPContext tcp_context{ m_context, std::move(socket) };
                         auto new_conn = std::make_shared<ITCPConn>(ITCPConn::EOwner::server, tcp_context, m_qMessagesIn);
-                        if (_interface.OnClientConnected(new_conn)) {
+                        if (_interface.OnClientConnectionRequest(new_conn)) {
                             m_deqConns.push_back(std::move(new_conn));
                             m_deqConns.back()->ConnectToClient(m_idCounter++);
+                            _interface.OnClientConnected(m_deqConns.back());
                             INFO_MSG("[%d] Connection approved.", m_deqConns.back()->GetID());
                         } 
                         else

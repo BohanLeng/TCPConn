@@ -39,10 +39,14 @@ namespace TCPConn {
         void Update(size_t nMaxMessages = -1, bool bWait = true);
         
         
-        /// \brief On new connection, pending approval to establish connection
+        /// \brief On new connection request, pending approval to establish connection
         /// \param client newly created socket pointer on server for this connection
         /// \return true to accept the connection, false to deny
-        virtual bool OnClientConnected(std::shared_ptr<ITCPConn> client) = 0;
+        virtual bool OnClientConnectionRequest(std::shared_ptr<ITCPConn> client) = 0;
+        
+        /// \brief On client connection established
+        /// \param client socket pointer to the connected client
+        virtual void OnClientConnected(std::shared_ptr<ITCPConn> client) = 0;
         
         /// \brief On client disconnection, will be called on sending attempt to a already disconnected client
         /// \param client socket pointer to the disconnected client

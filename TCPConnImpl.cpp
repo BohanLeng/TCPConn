@@ -24,8 +24,8 @@ namespace TCPConn {
         pimpl->ConnectToClient(uid);
     }
     
-    void ITCPConn::ConnectToServer(const struct TCPEndpoint& endpoint) {
-        pimpl->ConnectToServer(endpoint);
+    void ITCPConn::ConnectToServer(const struct TCPEndpoint &endpoint, std::function<void()> OnConnectedCallback) {
+        pimpl->ConnectToServer(endpoint, OnConnectedCallback);
     }
     
     void ITCPConn::Disconnect() {
@@ -65,11 +65,13 @@ namespace TCPConn {
             ERROR_MSG("Cannot connect client to client...");
     }
 
-    void TCPConnImpl::ConnectToServer(const struct ITCPConn::TCPEndpoint& endpoint)  {
+    void TCPConnImpl::ConnectToServer(const struct ITCPConn::TCPEndpoint &endpoint, std::function<void()> OnConnectedCallback) {
         if (m_nOwnerType == ITCPConn::EOwner::client) {
             async_connect(m_socket, endpoint.endpoint,
-                          [this](std::error_code ec, ip::tcp::endpoint endpoint) {
+                          [this, OnConnectedCallback](std::error_code ec, ip::tcp::endpoint endpoint) {
                               if (!ec) {
+                                  INFO_MSG("[%d] Connected to server: %s", id, endpoint.address().to_string().c_str());
+                                  OnConnectedCallback();
                                   ReadHeader();
                               } else {
                                   INFO_MSG("[%d] Connect fail: %s", id, ec.message().c_str());

@@ -30,7 +30,7 @@ namespace TCPConn {
         [[nodiscard]] uint32_t GetID() const;
 
         void ConnectToClient(uint32_t uid = 0);
-        void ConnectToServer(const struct ITCPConn::TCPEndpoint& endpoint);
+        void ConnectToServer(const struct ITCPConn::TCPEndpoint &endpoint, std::function<void()> OnConnectedCallback);
         void Disconnect();
         [[nodiscard]] bool IsConnected() const;
         

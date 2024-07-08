@@ -27,6 +27,7 @@
 
 #include "TCPMsg.h"
 #include "TCPMsgQueue.h"
+#include <functional>
 
 enum class MsgTypes;
 
@@ -68,7 +69,7 @@ namespace TCPConn {
         
         /// \brief For client to call, connect to a server
         /// \param endpoint server endpoint to connect
-        void ConnectToServer(const struct TCPEndpoint& endpoint);
+        void ConnectToServer(const struct TCPEndpoint &endpoint, std::function<void()> OnConnectedCallback);
         
         /// \brief Disconnect the connection
         void Disconnect();

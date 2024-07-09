@@ -33,9 +33,11 @@ enum class MsgTypes;
 
 namespace TCPConn {
 
+    template <typename T>
     class TCPConnImpl;
 
-    class TCPCONN_API ITCPConn : public std::enable_shared_from_this<ITCPConn> {
+    template <typename T>
+    class TCPCONN_API ITCPConn : public std::enable_shared_from_this<ITCPConn<T>> {
     public:
         
         /// \brief Creator of the connection 
@@ -55,7 +57,7 @@ namespace TCPConn {
         /// \param owner owner of the connection, either server or client
         /// \param context asio tcp context reference and socket
         /// \param qIn reference to the incoming message queue of owner
-        ITCPConn(EOwner owner, struct TCPContext& context, TCPMsgQueue<TCPMsgOwned>& qIn);
+        ITCPConn(EOwner owner, struct TCPContext& context, TCPMsgQueue<TCPMsgOwned<T>>& qIn);
         virtual ~ITCPConn();
 
         /// \brief Get the connection ID managed by server
@@ -69,7 +71,7 @@ namespace TCPConn {
         
         /// \brief For client to call, connect to a server
         /// \param endpoint server endpoint to connect
-        void ConnectToServer(const struct TCPEndpoint &endpoint, std::function<void()> OnConnectedCallback);
+        void ConnectToServer(const struct TCPEndpoint &endpoint, const std::function<void()>& OnConnectedCallback);
         
         /// \brief Disconnect the connection
         void Disconnect();
@@ -81,11 +83,16 @@ namespace TCPConn {
         
         /// \brief Send a message to the other end
         /// \param msg message to send
-        void Send(const TCPMsg& msg);
+        void Send(const T& msg);
         
     private:
-        std::unique_ptr<TCPConnImpl> pimpl;
+        std::unique_ptr<TCPConnImpl<T>> pimpl;
     };
+
+    /// \brief TCPMsg specialisation, used for header message communication
+    template class TCPCONN_API ITCPConn<TCPMsg>;
+    /// \brief TCPRawMsg specialisation for header-less raw message communication, use with caution
+    template class TCPCONN_API ITCPConn<TCPRawMsg>;
 
 } // TCPConn
 

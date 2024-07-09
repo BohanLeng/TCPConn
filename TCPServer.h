@@ -8,13 +8,15 @@
 #include "TCPConn.h"
 
 namespace TCPConn {
-    
+
+    template <typename T>
     class TCPServerImpl;
-    
+
+    template <typename T>
     class TCPCONN_API ITCPServer {
     public:
 
-        /// \brief Construct a new ITCPServer object, must override `OnMessage()`;
+        /// \brief Construct a new ITCPServer
         /// \param port 
         explicit ITCPServer(uint16_t port);
         virtual ~ITCPServer();
@@ -29,9 +31,14 @@ namespace TCPConn {
         
         
         /// \brief Message a client 
-        void MessageClient(std::shared_ptr<ITCPConn> client, const TCPMsg& msg);
+        /// \param client socket pointer to the client
+        /// \param msg message to send
+        void MessageClient(std::shared_ptr<ITCPConn<T>> client, const T& msg);
+        
         /// \brief Message all clients
-        void MessageAllClients(const TCPMsg& msg, std::shared_ptr<ITCPConn> pIgnoreClient = nullptr);
+        /// \param msg message to send
+        /// \param pIgnoreClient socket pointer to the client to ignore
+        void MessageAllClients(const T& msg, std::shared_ptr<ITCPConn<T>> pIgnoreClient = nullptr);
         
         
         /// \brief Actively consume messages in the message queue
@@ -42,24 +49,27 @@ namespace TCPConn {
         /// \brief On new connection request, pending approval to establish connection
         /// \param client newly created socket pointer on server for this connection
         /// \return true to accept the connection, false to deny
-        virtual bool OnClientConnectionRequest(std::shared_ptr<ITCPConn> client) = 0;
+        virtual bool OnClientConnectionRequest(std::shared_ptr<ITCPConn<T>> client) = 0;
         
         /// \brief On client connection established
         /// \param client socket pointer to the connected client
-        virtual void OnClientConnected(std::shared_ptr<ITCPConn> client) = 0;
+        virtual void OnClientConnected(std::shared_ptr<ITCPConn<T>> client) = 0;
         
         /// \brief On client disconnection, will be called on sending attempt to a already disconnected client
         /// \param client socket pointer to the disconnected client
-        virtual void OnClientDisconnected(std::shared_ptr<ITCPConn> client) = 0;
+        virtual void OnClientDisconnected(std::shared_ptr<ITCPConn<T>> client) = 0;
         
         /// \brief On message received, must be overridden
         /// \param client socket pointer to the client that sent the message
         /// \param msg received message
-        virtual void OnMessage(std::shared_ptr<ITCPConn> client, TCPMsg& msg) = 0;
+        virtual void OnMessage(std::shared_ptr<ITCPConn<T>> client, T& msg) = 0;
 
     private:
-        std::unique_ptr<TCPServerImpl> pimpl;
+        std::unique_ptr<TCPServerImpl<T>> pimpl;
     };
+
+    template class TCPCONN_API ITCPServer<TCPMsg>;
+    template class TCPCONN_API ITCPServer<TCPRawMsg>;
     
 }
 

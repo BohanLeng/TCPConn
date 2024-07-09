@@ -5,52 +5,64 @@
 #include "TCPServerImpl.h"
 #include "TCPConnImpl.h"
 #include "LogMacros.h"
+#include "TCPServer.h"
+
 
 namespace TCPConn {
 
     /* ----- ITCPServer ----- */
 
-    ITCPServer::ITCPServer(uint16_t port) 
+    template <typename T>
+    ITCPServer<T>::ITCPServer(uint16_t port) 
     {
-        pimpl = std::make_unique<TCPServerImpl>(*this, port);
+        pimpl = std::make_unique<TCPServerImpl<T>>(*this, port);
     }
-    
-    ITCPServer::~ITCPServer() {
-        pimpl->Stop();
-    }
-    
-    bool ITCPServer::Start() {
-        return pimpl->Start();
-    }
-    
-    void ITCPServer::Stop() {
+
+    template <typename T>
+    ITCPServer<T>::~ITCPServer() {
         pimpl->Stop();
     }
 
-    void ITCPServer::MessageClient(std::shared_ptr<ITCPConn> client, const TCPMsg& msg) {
+    template <typename T>
+    bool ITCPServer<T>::Start() {
+        return pimpl->Start();
+    }
+
+    template <typename T>
+    void ITCPServer<T>::Stop() {
+        pimpl->Stop();
+    }
+
+    template <typename T>
+    void ITCPServer<T>::MessageClient(std::shared_ptr<ITCPConn<T>> client, const T& msg) {
         pimpl->MessageClient(client, msg);
     }
 
-    void ITCPServer::MessageAllClients(const TCPMsg& msg, std::shared_ptr<ITCPConn> pIgnoreClient) {
+    template <typename T>
+    void ITCPServer<T>::MessageAllClients(const T& msg, std::shared_ptr<ITCPConn<T>> pIgnoreClient) {
         pimpl->MessageAllClients(msg, pIgnoreClient);
     }
 
-    void ITCPServer::Update(size_t nMaxMessages, bool bWait) {
+    template <typename T>
+    void ITCPServer<T>::Update(size_t nMaxMessages, bool bWait) {
         pimpl->Update(nMaxMessages, bWait);
     }
 
-    
+
     /* ----- TCPServerImpl ----- */
 
-    TCPServerImpl::TCPServerImpl(ITCPServer& interface, uint16_t port)
+    template <typename T>
+    TCPServerImpl<T>::TCPServerImpl(ITCPServer<T>& interface, uint16_t port)
             : _interface(interface), m_acceptor(m_context, ip::tcp::endpoint(ip::tcp::v4(), port)) {
     }
-    
-    TCPServerImpl::~TCPServerImpl() {
+
+    template <typename T>
+    TCPServerImpl<T>::~TCPServerImpl() {
         Stop();
     }
 
-    bool TCPServerImpl::Start() {
+    template <typename T>
+    bool TCPServerImpl<T>::Start() {
         try {
             WaitForClientConnection();
             m_thrContext = std::thread([this]() { m_context.run(); });
@@ -63,19 +75,21 @@ namespace TCPConn {
         return true;
     }
 
-    void TCPServerImpl::Stop() {
+    template <typename T>
+    void TCPServerImpl<T>::Stop() {
         m_context.stop();
         if (m_thrContext.joinable()) m_thrContext.join();
         INFO_MSG("[SERVER] Stopped!");
     }
 
-    void TCPServerImpl::WaitForClientConnection() {
+    template <typename T>
+    void TCPServerImpl<T>::WaitForClientConnection() {
         m_acceptor.async_accept(
                 [this](std::error_code ec, ip::tcp::socket socket) {
                     if (!ec) {
                         INFO_MSG("[SERVER] New Connection: %s", socket.remote_endpoint().address().to_string().c_str());
-                        struct ITCPConn::TCPContext tcp_context{ m_context, std::move(socket) };
-                        auto new_conn = std::make_shared<ITCPConn>(ITCPConn::EOwner::server, tcp_context, m_qMessagesIn);
+                        struct ITCPConn<T>::TCPContext tcp_context{ m_context, std::move(socket) };
+                        auto new_conn = std::make_shared<ITCPConn<T>>(ITCPConn<T>::EOwner::server, tcp_context, m_qMessagesIn);
                         if (_interface.OnClientConnectionRequest(new_conn)) {
                             m_deqConns.push_back(std::move(new_conn));
                             m_deqConns.back()->ConnectToClient(m_idCounter++);
@@ -91,7 +105,8 @@ namespace TCPConn {
                 });
     }
 
-    void TCPServerImpl::MessageClient(std::shared_ptr<ITCPConn> client, const TCPMsg& msg) {
+    template <typename T>
+    void TCPServerImpl<T>::MessageClient(std::shared_ptr<ITCPConn<T>> client, const T& msg) {
         if (client && client->IsConnected()) {
             client->Send(msg);
         } else {
@@ -104,7 +119,8 @@ namespace TCPConn {
         }
     }
 
-    void TCPServerImpl::MessageAllClients(const TCPMsg& msg, std::shared_ptr<ITCPConn> pIgnoreClient) {
+    template <typename T>
+    void TCPServerImpl<T>::MessageAllClients(const T& msg, std::shared_ptr<ITCPConn<T>> pIgnoreClient) {
         DEBUG_MSG("[SERVER] Sending message to all clients...");
         bool bInvalidClientExists = false;
         for (auto& client: m_deqConns) {
@@ -126,7 +142,8 @@ namespace TCPConn {
         }
     }
 
-    void TCPServerImpl::Update(size_t nMaxMessages, bool bWait) {
+    template <typename T>
+    void TCPServerImpl<T>::Update(size_t nMaxMessages, bool bWait) {
         if (bWait) m_qMessagesIn.wait();
         size_t nMessageCount = 0;
         while (nMessageCount < nMaxMessages && !m_qMessagesIn.empty()) {

@@ -12,29 +12,32 @@ using namespace boost::asio;
 
 namespace TCPConn {
 
-    struct ITCPConn::TCPContext {
+    template <typename T>
+    struct ITCPConn<T>::TCPContext {
         io_context &context;
         ip::tcp::socket socket;
     };
-    
-    struct ITCPConn::TCPEndpoint {
+
+    template <typename T>
+    struct ITCPConn<T>::TCPEndpoint {
         ip::tcp::resolver::results_type &endpoint;
     };
 
+    template <typename T>
     class TCPConnImpl {
     public:
-        TCPConnImpl(ITCPConn& interface, ITCPConn::EOwner owner, 
-                    struct ITCPConn::TCPContext& context, TCPMsgQueue<TCPMsgOwned>& qIn);
+        TCPConnImpl(ITCPConn<T>& interface, ITCPConn<T>::EOwner owner, 
+                    struct ITCPConn<T>::TCPContext& context, TCPMsgQueue<TCPMsgOwned<T>>& qIn);
         virtual ~TCPConnImpl();
 
         [[nodiscard]] uint32_t GetID() const;
 
         void ConnectToClient(uint32_t uid = 0);
-        void ConnectToServer(const struct ITCPConn::TCPEndpoint &endpoint, std::function<void()> OnConnectedCallback);
+        void ConnectToServer(const struct ITCPConn<T>::TCPEndpoint &endpoint, const std::function<void()>& OnConnectedCallback);
         void Disconnect();
         [[nodiscard]] bool IsConnected() const;
         
-        void Send(const TCPMsg &msg);
+        void Send(const T& msg);
 
     protected:
 
@@ -44,16 +47,21 @@ namespace TCPConn {
         void WriteBody();
         void AddToIncomingMessageQueue();
         
+        void ReadRaw();
+        void WriteRaw();
+        
         ip::tcp::socket m_socket;
         io_context& m_context;
-        TCPMsgQueue<TCPMsg> m_qMessagesOut;
-        TCPMsgQueue<TCPMsgOwned>& m_qMessagesIn;
-        TCPMsg m_msgTemporaryIn;
-        ITCPConn::EOwner m_nOwnerType;
+        
+        TCPMsgQueue<T> m_qMessagesOut{};
+        TCPMsgQueue<TCPMsgOwned<T>>& m_qMessagesIn;
+        T m_msgTemporaryIn;
+        
+        ITCPConn<T>::EOwner m_nOwnerType;
         uint32_t id = -1;
         
     private:
-        ITCPConn& _interface;
+        ITCPConn<T>& _interface;
     };
 
 } // TCPConn

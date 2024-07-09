@@ -10,57 +10,68 @@ namespace TCPConn {
 
     /* ----- ITCPClient ----- */
 
-    ITCPClient::ITCPClient() {
-        pimpl = std::make_unique<TCPClientImpl>(*this);
+    template <typename T>
+    ITCPClient<T>::ITCPClient() {
+        pimpl = std::make_unique<TCPClientImpl<T>>(*this);
     }
-    
-    ITCPClient::~ITCPClient() = default;
-    
-    bool ITCPClient::Connect(const std::string& host, const uint16_t port) {
+
+    template <typename T>
+    ITCPClient<T>::~ITCPClient() = default;
+
+    template <typename T>
+    bool ITCPClient<T>::Connect(const std::string& host, const uint16_t port) {
         return pimpl->Connect(host, port);
     }
-    
-    void ITCPClient::Disconnect() {
+
+    template <typename T>
+    void ITCPClient<T>::Disconnect() {
         pimpl->Disconnect();
     }
-    
-    bool ITCPClient::IsConnected() {
+
+    template <typename T>
+    bool ITCPClient<T>::IsConnected() {
         return pimpl->IsConnected();
     }
-    
-    void ITCPClient::Send(const TCPMsg& msg) {
+
+    template <typename T>
+    void ITCPClient<T>::Send(const T& msg) {
         pimpl->Send(msg);
     }
-    
-    TCPMsgQueue<TCPMsgOwned>& ITCPClient::Incoming() {
+
+    template <typename T>
+    TCPMsgQueue<TCPMsgOwned<T>>& ITCPClient<T>::Incoming() {
         return pimpl->Incoming();
     }
 
-    void ITCPClient::Update(size_t nMaxMessages, bool bWait) {
+    template <typename T>
+    void ITCPClient<T>::Update(size_t nMaxMessages, bool bWait) {
         pimpl->Update(nMaxMessages, bWait);
     }
 
 
     /* ----- TCPClientImpl ----- */
 
-    TCPClientImpl::TCPClientImpl(ITCPClient& interface)
+    template <typename T>
+    TCPClientImpl<T>::TCPClientImpl(ITCPClient<T>& interface)
         : _interface(interface), m_socket(m_context) {}
 
-    TCPClientImpl::~TCPClientImpl() {
+    template <typename T>
+    TCPClientImpl<T>::~TCPClientImpl() {
         m_bIsDestroying = true;
         Disconnect();
     }
 
-    bool TCPClientImpl::Connect(const std::string& host, const uint16_t port) {
+    template <typename T>
+    bool TCPClientImpl<T>::Connect(const std::string& host, const uint16_t port) {
         try {
             ip::tcp::resolver resolver(m_context);
             ip::tcp::resolver::results_type endpoint = resolver.resolve(host, std::to_string(port));
 
-            ITCPConn::TCPContext tcp_context{m_context, ip::tcp::socket(m_context)};
-            m_connection = std::make_unique<ITCPConn>(ITCPConn::EOwner::client, tcp_context, m_qMessagesIn);
+            struct ITCPConn<T>::TCPContext tcp_context{m_context, ip::tcp::socket(m_context)};
+            m_connection = std::make_unique<ITCPConn<T>>(ITCPConn<T>::EOwner::client, tcp_context, m_qMessagesIn);
 
             INFO_MSG("Connecting to %s:%d", host.c_str(), port);
-            ITCPConn::TCPEndpoint tcp_endpoint{endpoint};
+            struct ITCPConn<T>::TCPEndpoint tcp_endpoint{endpoint};
             m_connection->ConnectToServer(tcp_endpoint, [this]() { _interface.OnConnected(); });
 
             m_thrContext = std::thread([this]() { m_context.run(); });
@@ -72,7 +83,8 @@ namespace TCPConn {
         }
     }
 
-    void TCPClientImpl::Disconnect() {
+    template <typename T>
+    void TCPClientImpl<T>::Disconnect() {
         if (IsConnected()) {
             m_connection->Disconnect();
         }
@@ -84,19 +96,23 @@ namespace TCPConn {
         if(!m_bIsDestroying) _interface.OnDisconnected();
     }
 
-    bool TCPClientImpl::IsConnected() {
+    template <typename T>
+    bool TCPClientImpl<T>::IsConnected() {
         return m_connection ? m_connection->IsConnected() : false;
     }
 
-    void TCPClientImpl::Send(const TCPMsg& msg) {
+    template <typename T>
+    void TCPClientImpl<T>::Send(const T& msg) {
         if (IsConnected()) m_connection->Send(msg);
     }
 
-    TCPMsgQueue<TCPMsgOwned>& TCPClientImpl::Incoming() {
+    template <typename T>
+    TCPMsgQueue<TCPMsgOwned<T>>& TCPClientImpl<T>::Incoming() {
         return m_qMessagesIn;
     }
 
-    void TCPClientImpl::Update(size_t nMaxMessages, bool bWait) {
+    template <typename T>
+    void TCPClientImpl<T>::Update(size_t nMaxMessages, bool bWait) {
         if (bWait) m_qMessagesIn.wait();
         size_t nMessageCount = 0;
         while (nMessageCount < nMaxMessages && !m_qMessagesIn.empty()) {

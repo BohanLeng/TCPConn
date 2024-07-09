@@ -13,31 +13,32 @@ using namespace boost::asio;
 
 namespace TCPConn {
 
+    template <typename T>
     class TCPClientImpl {
     public:
-        TCPClientImpl(ITCPClient& interface);
+        explicit TCPClientImpl(ITCPClient<T>& interface);
         virtual ~TCPClientImpl();
 
         bool Connect(const std::string& host, uint16_t port);
         void Disconnect();
         bool IsConnected();
 
-        void Send(const TCPMsg& msg);
+        void Send(const T& msg);
 
         void Update(size_t nMaxMessages = -1, bool bWait = true);
 
-        TCPMsgQueue<TCPMsgOwned>& Incoming();
+        TCPMsgQueue<TCPMsgOwned<T>>& Incoming();
 
     protected:
         io_context m_context;
         std::thread m_thrContext;
         ip::tcp::socket m_socket;
-        std::unique_ptr<ITCPConn> m_connection;
-        TCPMsgQueue<TCPMsgOwned> m_qMessagesIn;
+        std::unique_ptr<ITCPConn<T>> m_connection;
+        TCPMsgQueue<TCPMsgOwned<T>> m_qMessagesIn;
         bool m_bIsDestroying;
 
     private:
-        ITCPClient& _interface;
+        ITCPClient<T>& _interface;
     };
     
 } // TCPConn

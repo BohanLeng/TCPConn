@@ -8,9 +8,11 @@
 #include "TCPConn.h"
 
 namespace TCPConn {
-         
+
+    template <typename T>
     class TCPClientImpl;
 
+    template <typename T>
     class TCPCONN_API ITCPClient {
     public:
         ITCPClient();
@@ -30,11 +32,11 @@ namespace TCPConn {
         
         /// \brief Send a message to the server
         /// \param msg message to send
-        void Send(const TCPMsg& msg);
+        void Send(const T& msg);
         
         /// \brief Get the incoming message queue
         /// \return reference to the incoming message queue
-        TCPMsgQueue<TCPMsgOwned>& Incoming();
+        TCPMsgQueue<TCPMsgOwned<T>>& Incoming();
         
         /// \brief Actively consume messages in the message queue
         /// \param nMaxMessages maximum number of messages to consume, default is -1, consume all
@@ -48,11 +50,14 @@ namespace TCPConn {
 
         /// \brief On message received, must be overridden
         /// \param msg received message
-        virtual void OnMessage(TCPMsg& msg) = 0;
+        virtual void OnMessage(T& msg) = 0;
 
     private:
-        std::unique_ptr<TCPClientImpl> pimpl;
+        std::unique_ptr<TCPClientImpl<T>> pimpl;
     };
+    
+    template class TCPCONN_API ITCPClient<TCPMsg>;
+    template class TCPCONN_API ITCPClient<TCPRawMsg>;
     
 } // TCPConn
 

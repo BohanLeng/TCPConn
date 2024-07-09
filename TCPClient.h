@@ -56,9 +56,6 @@ namespace TCPConn {
         std::unique_ptr<TCPClientImpl<T>> pimpl;
     };
     
-    template class TCPCONN_API ITCPClient<TCPMsg>;
-    template class TCPCONN_API ITCPClient<TCPRawMsg>;
-    
 } // TCPConn
 
 

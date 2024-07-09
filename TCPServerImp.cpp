@@ -152,5 +152,8 @@ namespace TCPConn {
             nMessageCount++;
         }
     }
+
+    template class ITCPServer<TCPMsg>;
+    template class ITCPServer<TCPRawMsg>;
     
 } // TCPConn

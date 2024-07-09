@@ -67,9 +67,6 @@ namespace TCPConn {
     private:
         std::unique_ptr<TCPServerImpl<T>> pimpl;
     };
-
-    template class TCPCONN_API ITCPServer<TCPMsg>;
-    template class TCPCONN_API ITCPServer<TCPRawMsg>;
     
 }
 

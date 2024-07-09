@@ -122,4 +122,7 @@ namespace TCPConn {
         }
     }
 
+    template class ITCPClient<TCPMsg>;
+    template class ITCPClient<TCPRawMsg>;
+    
 } // TCPConn

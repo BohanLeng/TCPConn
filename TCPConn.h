@@ -89,11 +89,6 @@ namespace TCPConn {
         std::unique_ptr<TCPConnImpl<T>> pimpl;
     };
 
-    /// \brief TCPMsg specialisation, used for header message communication
-    template class TCPCONN_API ITCPConn<TCPMsg>;
-    /// \brief TCPRawMsg specialisation for header-less raw message communication, use with caution
-    template class TCPCONN_API ITCPConn<TCPRawMsg>;
-
 } // TCPConn
 
 #endif //ZMONITOR_TCPCONN_H

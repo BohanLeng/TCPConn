@@ -262,4 +262,7 @@ namespace TCPConn {
             static_assert(std::is_same<T, TCPRawMsg>::value, "WriteRaw() is only for TCPRawMsg");
     }
 
+    template class ITCPConn<TCPMsg>;
+    template class ITCPConn<TCPRawMsg>;
+
 } // TCPConn

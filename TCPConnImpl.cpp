@@ -79,8 +79,11 @@ namespace TCPConn {
         if (m_nOwnerType == ITCPConn<T>::EOwner::server) {
             if (m_socket.is_open()) {
                 id = uid;
-                WriteValidation();
-                ReadValidation();
+                if constexpr (std::is_same<T, TCPMsg>::value) {
+                    WriteValidation();
+                    ReadValidation(); 
+                }
+                else if constexpr (std::is_same<T, TCPRawMsg>::value) ReadRaw();
             }
         } else
             ERROR_MSG("Cannot connect client to client!");
@@ -94,7 +97,10 @@ namespace TCPConn {
                               if (!ec) {
                                   INFO_MSG("[%d] Connected to server: %s", id, endpoint.address().to_string().c_str());
                                   OnConnectedCallback();
-                                  ReadValidation();
+                                  if constexpr (std::is_same<T, TCPMsg>::value) {
+                                      ReadValidation();
+                                  }
+                                  else if constexpr (std::is_same<T, TCPRawMsg>::value) ReadRaw();
                               } else {
                                   INFO_MSG("[%d] Connect fail: %s", id, ec.message().c_str());
                                   m_socket.close();

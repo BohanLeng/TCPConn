@@ -7,7 +7,7 @@
 
 #include <cstdint>
 #include <vector>
-#include <memory>
+#include <iostream>
 
 namespace TCPConn {
     
@@ -22,6 +22,11 @@ namespace TCPConn {
 
         [[nodiscard]] size_t full_size() const {
             return sizeof(TCPMsgHeader) + body.size();
+        }
+        
+        friend std::ostream& operator << (std::ostream& os, const TCPMsg& msg) {
+            os << "Message type: " << msg.header.type << ", size: " << msg.header.size;
+            return os;
         }
 
         template <typename T>
@@ -52,6 +57,16 @@ namespace TCPConn {
             
         [[nodiscard]] size_t full_size() const {
             return body.size();
+        }
+        
+        friend std::ostream& operator << (std::ostream& os, const TCPRawMsg& msg) {
+            os << "Raw data (size " << std::dec << msg.full_size() << "): \n";
+            // print hexadecimal value of the raw byte message:
+            for (const auto& byte : msg.body) {
+                os << std::hex << static_cast<int>(byte) << ' ';
+            }
+            os << '\n';
+            return os;
         }
 
         template <typename T>

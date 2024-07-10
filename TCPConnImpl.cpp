@@ -31,7 +31,7 @@ namespace TCPConn {
         pimpl->ConnectToClient(uid);
     }
 
-    template<typename T>
+    template <typename T>
     void ITCPConn<T>::ConnectToServer(const ITCPConn::TCPEndpoint &endpoint,
                                       const std::function<void()> &OnConnectedCallback) {
         pimpl->ConnectToServer(endpoint, OnConnectedCallback);
@@ -60,6 +60,10 @@ namespace TCPConn {
         : _interface(interface), m_context(context.context), m_socket(std::move(context.socket)), m_qMessagesIn(qIn)
     {
         m_nOwnerType = owner;
+        if (m_nOwnerType == ITCPConn<T>::EOwner::server) {
+            m_nValidationOut = uint64_t(std::chrono::system_clock::now().time_since_epoch().count());
+            m_nValidationCheck = CalculateValidation(m_nValidationOut);
+        }
     }
     
     template <typename T>
@@ -75,8 +79,8 @@ namespace TCPConn {
         if (m_nOwnerType == ITCPConn<T>::EOwner::server) {
             if (m_socket.is_open()) {
                 id = uid;
-                if constexpr (std::is_same<T, TCPMsg>::value) ReadHeader();
-                else if constexpr (std::is_same<T, TCPRawMsg>::value) ReadRaw();
+                WriteValidation();
+                ReadValidation();
             }
         } else
             ERROR_MSG("Cannot connect client to client!");
@@ -90,8 +94,7 @@ namespace TCPConn {
                               if (!ec) {
                                   INFO_MSG("[%d] Connected to server: %s", id, endpoint.address().to_string().c_str());
                                   OnConnectedCallback();
-                                  if constexpr (std::is_same<T, TCPMsg>::value) ReadHeader();
-                                  else if constexpr (std::is_same<T, TCPRawMsg>::value) ReadRaw();
+                                  ReadValidation();
                               } else {
                                   INFO_MSG("[%d] Connect fail: %s", id, ec.message().c_str());
                                   m_socket.close();
@@ -224,7 +227,7 @@ namespace TCPConn {
         else if constexpr (std::is_same<T, TCPRawMsg>::value) ReadRaw();
     }
 
-    template<typename T>
+    template <typename T>
     void TCPConnImpl<T>::ReadRaw() {
         if constexpr (std::is_same<T, TCPRawMsg>::value) {
             m_msgTemporaryIn.body.resize(RAW_RECEIVE_BUFFER_SIZE);
@@ -243,7 +246,7 @@ namespace TCPConn {
             static_assert(std::is_same<T, TCPRawMsg>::value, "ReadRaw() is only for TCPRawMsg");
     }
 
-    template<typename T>
+    template <typename T>
     void TCPConnImpl<T>::WriteRaw() {
         if constexpr (std::is_same<T, TCPRawMsg>::value)
             async_write(m_socket, buffer(m_qMessagesOut.front().body.data(), m_qMessagesOut.front().full_size()),
@@ -260,6 +263,52 @@ namespace TCPConn {
                     });
         else
             static_assert(std::is_same<T, TCPRawMsg>::value, "WriteRaw() is only for TCPRawMsg");
+    }
+
+    template <typename T>
+    void TCPConnImpl<T>::WriteValidation() {
+        async_write(m_socket, buffer(&m_nValidationOut, sizeof(uint64_t)),
+                    [this](std::error_code ec, std::size_t length) {
+                        if (!ec) {
+                            if (m_nOwnerType == ITCPConn<T>::EOwner::client) {
+                                if constexpr (std::is_same<T, TCPMsg>::value) ReadHeader();
+                                else if constexpr (std::is_same<T, TCPRawMsg>::value) ReadRaw();
+                            }
+                        } else {
+                            INFO_MSG("[%d] Write validation message fail, closing.", id);
+                            m_socket.close();
+                        }
+                    });
+    }
+
+    template <typename T>
+    void TCPConnImpl<T>::ReadValidation() {
+        async_read(m_socket, buffer(&m_nValidationIn, sizeof(uint64_t)),
+                   [this](std::error_code ec, std::size_t length) {
+                       if (!ec) {
+                           if (m_nOwnerType == ITCPConn<T>::EOwner::server) {
+                               if (m_nValidationIn == m_nValidationCheck) {
+                                   INFO_MSG("New client validated.");
+                                   if constexpr (std::is_same<T, TCPMsg>::value) ReadHeader();
+                                   else if constexpr (std::is_same<T, TCPRawMsg>::value) ReadRaw();
+                               } else {
+                                   INFO_MSG("Client validation fail, refusing it.");
+                                   m_socket.close();
+                               }
+                           } else {
+                               m_nValidationOut = CalculateValidation(m_nValidationIn);
+                               WriteValidation();
+                           }
+                       } else {
+                           INFO_MSG("Fail validation reading, closing.");
+                           m_socket.close();
+                       }
+                   });
+    }
+
+    template <typename T>
+    uint64_t TCPConnImpl<T>::CalculateValidation(uint64_t nInput) {
+        return nInput ^ 0x4B554C657576656E;
     }
 
     template class ITCPConn<TCPMsg>;

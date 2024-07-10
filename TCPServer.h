@@ -51,7 +51,7 @@ namespace TCPConn {
         /// \return true to accept the connection, false to deny
         virtual bool OnClientConnectionRequest(std::shared_ptr<ITCPConn<T>> client) = 0;
         
-        /// \brief On client connection established
+        /// \brief On client connection established, pending validation
         /// \param client socket pointer to the connected client
         virtual void OnClientConnected(std::shared_ptr<ITCPConn<T>> client) = 0;
         

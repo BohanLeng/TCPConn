@@ -36,6 +36,10 @@ namespace TCPConn {
         void ConnectToServer(const struct ITCPConn<T>::TCPEndpoint &endpoint, const std::function<void()>& OnConnectedCallback);
         void Disconnect();
         [[nodiscard]] bool IsConnected() const;
+
+        void WriteValidation();
+        void ReadValidation();
+        static uint64_t CalculateValidation(uint64_t nInput);
         
         void Send(const T& msg);
 
@@ -56,6 +60,10 @@ namespace TCPConn {
         TCPMsgQueue<T> m_qMessagesOut{};
         TCPMsgQueue<TCPMsgOwned<T>>& m_qMessagesIn;
         T m_msgTemporaryIn;
+        
+        uint64_t m_nValidationOut = 0;
+        uint64_t m_nValidationIn = 0;
+        uint64_t m_nValidationCheck = 0;
         
         ITCPConn<T>::EOwner m_nOwnerType;
         uint32_t id = -1;

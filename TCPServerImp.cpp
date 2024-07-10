@@ -34,12 +34,12 @@ namespace TCPConn {
     }
 
     template <typename T>
-    void ITCPServer<T>::MessageClient(std::shared_ptr<ITCPConn<T>> client, const T& msg) {
+    void ITCPServer<T>::MessageClient(std::shared_ptr<ITCPConn<T>> client, const T& msg) const {
         pimpl->MessageClient(client, msg);
     }
 
     template <typename T>
-    void ITCPServer<T>::MessageAllClients(const T& msg, std::shared_ptr<ITCPConn<T>> pIgnoreClient) {
+    void ITCPServer<T>::MessageAllClients(const T& msg, std::shared_ptr<ITCPConn<T>> pIgnoreClient) const {
         pimpl->MessageAllClients(msg, pIgnoreClient);
     }
 

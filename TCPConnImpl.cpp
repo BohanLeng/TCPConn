@@ -48,7 +48,7 @@ namespace TCPConn {
     }
 
     template <typename T>
-    void ITCPConn<T>::Send(const T& msg) {
+    void ITCPConn<T>::Send(const T& msg) const {
         pimpl->Send(msg);
     }
 

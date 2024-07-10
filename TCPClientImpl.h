@@ -21,9 +21,9 @@ namespace TCPConn {
 
         bool Connect(const std::string& host, uint16_t port);
         void Disconnect();
-        bool IsConnected();
+        [[nodiscard]] bool IsConnected() const;
 
-        void Send(const T& msg);
+        void Send(const T& msg) const;
 
         void Update(size_t nMaxMessages = -1, bool bWait = true);
 

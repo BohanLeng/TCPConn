@@ -29,17 +29,17 @@ namespace TCPConn {
     }
 
     template <typename T>
-    bool ITCPClient<T>::IsConnected() {
+    bool ITCPClient<T>::IsConnected() const {
         return pimpl->IsConnected();
     }
 
     template <typename T>
-    void ITCPClient<T>::Send(const T& msg) {
+    void ITCPClient<T>::Send(const T& msg) const {
         pimpl->Send(msg);
     }
 
     template <typename T>
-    TCPMsgQueue<TCPMsgOwned<T>>& ITCPClient<T>::Incoming() {
+    TCPMsgQueue<TCPMsgOwned<T>>& ITCPClient<T>::Incoming() const {
         return pimpl->Incoming();
     }
 
@@ -97,12 +97,12 @@ namespace TCPConn {
     }
 
     template <typename T>
-    bool TCPClientImpl<T>::IsConnected() {
+    bool TCPClientImpl<T>::IsConnected() const {
         return m_connection ? m_connection->IsConnected() : false;
     }
 
     template <typename T>
-    void TCPClientImpl<T>::Send(const T& msg) {
+    void TCPClientImpl<T>::Send(const T& msg) const {
         if (IsConnected()) m_connection->Send(msg);
     }
 

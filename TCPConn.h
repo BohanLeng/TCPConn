@@ -83,7 +83,7 @@ namespace TCPConn {
         
         /// \brief Send a message to the other end
         /// \param msg message to send
-        void Send(const T& msg);
+        void Send(const T& msg) const;
         
     private:
         std::unique_ptr<TCPConnImpl<T>> pimpl;

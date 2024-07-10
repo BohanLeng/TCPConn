@@ -33,12 +33,12 @@ namespace TCPConn {
         /// \brief Message a client 
         /// \param client socket pointer to the client
         /// \param msg message to send
-        void MessageClient(std::shared_ptr<ITCPConn<T>> client, const T& msg);
+        void MessageClient(std::shared_ptr<ITCPConn<T>> client, const T& msg) const;
         
         /// \brief Message all clients
         /// \param msg message to send
         /// \param pIgnoreClient socket pointer to the client to ignore
-        void MessageAllClients(const T& msg, std::shared_ptr<ITCPConn<T>> pIgnoreClient = nullptr);
+        void MessageAllClients(const T& msg, std::shared_ptr<ITCPConn<T>> pIgnoreClient = nullptr) const;
         
         
         /// \brief Actively consume messages in the message queue

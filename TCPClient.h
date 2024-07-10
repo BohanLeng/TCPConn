@@ -28,15 +28,15 @@ namespace TCPConn {
         
         /// \brief Check if the client is connected
         /// \return true if the socket is open
-        bool IsConnected();
+        [[nodiscard]] bool IsConnected() const;
         
         /// \brief Send a message to the server
         /// \param msg message to send
-        void Send(const T& msg);
+        void Send(const T& msg) const;
         
         /// \brief Get the incoming message queue
         /// \return reference to the incoming message queue
-        TCPMsgQueue<TCPMsgOwned<T>>& Incoming();
+        TCPMsgQueue<TCPMsgOwned<T>>& Incoming() const;
         
         /// \brief Actively consume messages in the message queue
         /// \param nMaxMessages maximum number of messages to consume, default is -1, consume all

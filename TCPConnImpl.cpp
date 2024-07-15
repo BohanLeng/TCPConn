@@ -96,7 +96,7 @@ namespace TCPConn {
                           [this, OnConnectedCallback](std::error_code ec, ip::tcp::endpoint endpoint) {
                               if (!ec) {
                                   INFO_MSG("[%d] Connected to server: %s", id, endpoint.address().to_string().c_str());
-                                  OnConnectedCallback();
+                                  auto async_call = std::async(std::launch::async, OnConnectedCallback);
                                   if constexpr (std::is_same<T, TCPMsg>::value) {
                                       ReadValidation();
                                   }

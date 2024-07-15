@@ -36,6 +36,7 @@ namespace TCPConn {
         std::unique_ptr<ITCPConn<T>> m_connection;
         TCPMsgQueue<TCPMsgOwned<T>> m_qMessagesIn;
         bool m_bIsDestroying;
+        std::atomic<bool> m_bClientRunning{false};
 
     private:
         ITCPClient<T>& _interface;

@@ -19,9 +19,7 @@ namespace TCPConn {
     }
 
     template <typename T>
-    ITCPServer<T>::~ITCPServer() {
-        pimpl->Stop();
-    }
+    ITCPServer<T>::~ITCPServer() = default;
 
     template <typename T>
     bool ITCPServer<T>::Start() {
@@ -72,11 +70,14 @@ namespace TCPConn {
             return false;
         }
         INFO_MSG("[SERVER] Started!");
+        m_bServerRunning = true;
         return true;
     }
 
     template <typename T>
     void TCPServerImpl<T>::Stop() {
+        if (!m_bServerRunning) return;
+        m_bServerRunning = false;
         m_context.stop();
         if (m_thrContext.joinable()) m_thrContext.join();
         INFO_MSG("[SERVER] Stopped!");

@@ -75,7 +75,7 @@ namespace TCPConn {
             m_connection->ConnectToServer(tcp_endpoint, [this]() { _interface.OnConnected(); });
 
             m_thrContext = std::thread([this]() { m_context.run(); });
-
+            m_bClientRunning = true;
             return true;
         } catch (std::exception& e) {
             ERROR_MSG("Client Exception: %s", e.what());
@@ -85,6 +85,7 @@ namespace TCPConn {
 
     template <typename T>
     void TCPClientImpl<T>::Disconnect() {
+        if (!m_bClientRunning) return;
         if (IsConnected()) {
             m_connection->Disconnect();
         }

@@ -33,6 +33,7 @@ namespace TCPConn {
         std::deque<std::shared_ptr<ITCPConn<T>>> m_deqConns;
         io_context m_context;
         std::thread m_thrContext;
+        std::atomic<bool> m_bServerRunning{false};
         ip::tcp::acceptor m_acceptor;
         uint32_t m_idCounter = 10000;
         

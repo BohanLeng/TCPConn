@@ -35,6 +35,7 @@ namespace TCPConn {
         std::thread m_thrContext;
         std::atomic<bool> m_bServerRunning{false};
         ip::tcp::acceptor m_acceptor;
+        uint16_t m_port;
         uint32_t m_idCounter = 10000;
         
     private:

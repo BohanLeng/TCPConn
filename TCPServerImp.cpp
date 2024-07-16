@@ -51,7 +51,7 @@ namespace TCPConn {
 
     template <typename T>
     TCPServerImpl<T>::TCPServerImpl(ITCPServer<T>& interface, uint16_t port)
-            : _interface(interface), m_acceptor(m_context, ip::tcp::endpoint(ip::tcp::v4(), port)) {
+            : _interface(interface), m_port(port), m_acceptor(m_context, ip::tcp::endpoint(ip::tcp::v4(), port)) {
     }
 
     template <typename T>
@@ -69,7 +69,7 @@ namespace TCPConn {
             ERROR_MSG("[SERVER] Exception: %s", e.what());
             return false;
         }
-        INFO_MSG("[SERVER] Started!");
+        INFO_MSG("[SERVER] Started at :%d.", m_port);
         m_bServerRunning = true;
         return true;
     }

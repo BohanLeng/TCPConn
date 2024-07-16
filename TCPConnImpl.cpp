@@ -96,11 +96,13 @@ namespace TCPConn {
                           [this, OnConnectedCallback](std::error_code ec, ip::tcp::endpoint endpoint) {
                               if (!ec) {
                                   INFO_MSG("[%d] Connected to server: %s", id, endpoint.address().to_string().c_str());
-                                  auto async_call = std::async(std::launch::async, OnConnectedCallback);
                                   if constexpr (std::is_same<T, TCPMsg>::value) {
-                                      ReadValidation();
+                                      ReadValidation(OnConnectedCallback);
                                   }
-                                  else if constexpr (std::is_same<T, TCPRawMsg>::value) ReadRaw();
+                                  else if constexpr (std::is_same<T, TCPRawMsg>::value) {
+                                      auto async_call = std::async(std::launch::async, OnConnectedCallback);
+                                      ReadRaw();
+                                  }
                               } else {
                                   INFO_MSG("[%d] Connect fail: %s", id, ec.message().c_str());
                                   m_socket.close();
@@ -160,8 +162,6 @@ namespace TCPConn {
                                m_socket.close();
                            }
                        });
-        else 
-            static_assert(std::is_same<T, TCPMsg>::value, "ReadHeader() is only for TCPMsg");
     }
 
     template <typename T>
@@ -176,8 +176,6 @@ namespace TCPConn {
                                m_socket.close();
                            }
                        });
-        else
-            static_assert(std::is_same<T, TCPMsg>::value, "ReadBody() is only for TCPMsg");
     }
 
     template <typename T>
@@ -199,8 +197,6 @@ namespace TCPConn {
                                 m_socket.close();
                             }
                         });
-        else
-            static_assert(std::is_same<T, TCPMsg>::value, "ConnectToClient() is only for TCPMsg");
     }
 
     template <typename T>
@@ -218,8 +214,6 @@ namespace TCPConn {
                                 m_socket.close();
                             }
                         });
-        else 
-            static_assert(std::is_same<T, TCPMsg>::value, "WriteBody() is only for TCPMsg");
     }
 
     template <typename T>
@@ -248,8 +242,6 @@ namespace TCPConn {
                                        }
                                    });
         }
-        else
-            static_assert(std::is_same<T, TCPRawMsg>::value, "ReadRaw() is only for TCPRawMsg");
     }
 
     template <typename T>
@@ -267,34 +259,29 @@ namespace TCPConn {
                             m_socket.close();
                         }
                     });
-        else
-            static_assert(std::is_same<T, TCPRawMsg>::value, "WriteRaw() is only for TCPRawMsg");
     }
 
     template <typename T>
     void TCPConnImpl<T>::WriteValidation() {
-        async_write(m_socket, buffer(&m_nValidationOut, sizeof(uint64_t)),
-                    [this](std::error_code ec, std::size_t length) {
-                        if (!ec) {
-                            if (m_nOwnerType == ITCPConn<T>::EOwner::client) {
-                                if constexpr (std::is_same<T, TCPMsg>::value) ReadHeader();
-                                else if constexpr (std::is_same<T, TCPRawMsg>::value) ReadRaw();
+        if (m_nOwnerType == ITCPConn<T>::EOwner::server)
+            async_write(m_socket, buffer(&m_nValidationOut, sizeof(uint64_t)),
+                        [this](std::error_code ec, std::size_t length) {
+                            if (ec) {
+                                INFO_MSG("[%d] Write validation message fail, closing.", id);
+                                m_socket.close();
                             }
-                        } else {
-                            INFO_MSG("[%d] Write validation message fail, closing.", id);
-                            m_socket.close();
-                        }
-                    });
+                        });
     }
 
     template <typename T>
     void TCPConnImpl<T>::ReadValidation() {
-        async_read(m_socket, buffer(&m_nValidationIn, sizeof(uint64_t)),
-                   [this](std::error_code ec, std::size_t length) {
-                       if (!ec) {
-                           if (m_nOwnerType == ITCPConn<T>::EOwner::server) {
+        if (m_nOwnerType == ITCPConn<T>::EOwner::server)
+            async_read(m_socket, buffer(&m_nValidationIn, sizeof(uint64_t)),
+                       [this](std::error_code ec, std::size_t length) {
+                           if (!ec) {
                                if (m_nValidationIn == m_nValidationCheck) {
                                    INFO_MSG("New client validated.");
+                                   NotifyValidation();
                                    if constexpr (std::is_same<T, TCPMsg>::value) ReadHeader();
                                    else if constexpr (std::is_same<T, TCPRawMsg>::value) ReadRaw();
                                } else {
@@ -302,16 +289,76 @@ namespace TCPConn {
                                    m_socket.close();
                                }
                            } else {
-                               m_nValidationOut = CalculateValidation(m_nValidationIn);
-                               WriteValidation();
+                               INFO_MSG("Fail validation reading, closing.");
+                               m_socket.close();
                            }
-                       } else {
-                           INFO_MSG("Fail validation reading, closing.");
-                           m_socket.close();
-                       }
-                   });
+                       });
     }
 
+    template<typename T>
+    void TCPConnImpl<T>::ReadValidation(const std::function<void()> &OnConnectedCallback) {
+        if (m_nOwnerType == ITCPConn<T>::EOwner::client)
+            async_read(m_socket, buffer(&m_nValidationIn, sizeof(uint64_t)),
+                       [this, OnConnectedCallback](std::error_code ec, std::size_t length) {
+                           if (!ec) {
+                               m_nValidationOut = CalculateValidation(m_nValidationIn);
+                               WriteValidation(OnConnectedCallback);
+                           } else {
+                               INFO_MSG("Fail validation reading, closing.");
+                               m_socket.close();
+                           }
+                       });
+    }
+
+    template <typename T>
+    void TCPConnImpl<T>::WriteValidation(const std::function<void()>& OnConnectedCallback) {
+        if (m_nOwnerType == ITCPConn<T>::EOwner::client)
+            async_write(m_socket, buffer(&m_nValidationOut, sizeof(uint64_t)),
+                        [this, OnConnectedCallback](std::error_code ec, std::size_t length) {
+                            if (!ec) {
+                                WaitForValidation(OnConnectedCallback);
+                            } else {
+                                INFO_MSG("[%d] Write validation message fail, closing.", id);
+                                m_socket.close();
+                            }
+                        });
+    }
+
+    template<typename T>
+    void TCPConnImpl<T>::NotifyValidation() {
+        if (m_nOwnerType == ITCPConn<T>::EOwner::server) {
+            async_write(m_socket, buffer(&m_nValidationCheck, sizeof(uint64_t)),
+                        [this](std::error_code ec, std::size_t length) {
+                            if (!ec) {
+                                INFO_MSG("Validation notification sent to client.");
+                            } else {
+                                INFO_MSG("Validation notification fail, closing.");
+                                m_socket.close();
+                            }
+                        });
+        }
+    }
+
+    template<typename T>
+    void TCPConnImpl<T>::WaitForValidation(const std::function<void()>& OnConnectedCallback) {
+        if (m_nOwnerType == ITCPConn<T>::EOwner::client) {
+            async_read(m_socket, buffer(&m_nValidationCheck, sizeof(uint64_t)),
+                                        [this, OnConnectedCallback](std::error_code ec, std::size_t length) {
+                                            if (!ec) {
+                                                if (m_nValidationCheck == m_nValidationOut) {
+                                                    INFO_MSG("Validation notification received from server.");
+                                                    auto async_call = std::async(std::launch::async, OnConnectedCallback);
+                                                    if constexpr (std::is_same<T, TCPMsg>::value) ReadHeader();
+                                                    else if constexpr (std::is_same<T, TCPRawMsg>::value) ReadRaw();
+                                                }
+                                            } else {
+                                                INFO_MSG("Validation notification fail, closing.");
+                                                m_socket.close();
+                                            }
+                                        });
+        }
+    }
+    
     template <typename T>
     uint64_t TCPConnImpl<T>::CalculateValidation(uint64_t nInput) {
         return nInput ^ 0x4B554C657576656E;

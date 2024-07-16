@@ -37,8 +37,14 @@ namespace TCPConn {
         void Disconnect();
         [[nodiscard]] bool IsConnected() const;
 
+        // Server validation procedure 
         void WriteValidation();
         void ReadValidation();
+        void NotifyValidation();
+        // Client validation procedure
+        void ReadValidation(const std::function<void()>& OnConnectedCallback);
+        void WriteValidation(const std::function<void()>& OnConnectedCallback);
+        void WaitForValidation(const std::function<void()>& OnConnectedCallback);
         static uint64_t CalculateValidation(uint64_t nInput);
         
         void Send(const T& msg);

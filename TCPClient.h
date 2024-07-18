@@ -42,6 +42,10 @@ namespace TCPConn {
         /// \param nMaxMessages maximum number of messages to consume, default is -1, consume all
         void Update(size_t nMaxMessages = -1, bool bWait = true);
 
+        /// \brief Start continuous update messages
+        /// Will block the current thread. Pending signals to terminate
+        void Run();
+
         /// \brief On connected to server
         virtual void OnConnected() = 0;
 

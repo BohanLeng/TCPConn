@@ -6,6 +6,7 @@
 #include "TCPConnImpl.h"
 #include "LogMacros.h"
 #include "TCPServer.h"
+#include <csignal>
 
 
 namespace TCPConn {
@@ -46,9 +47,17 @@ namespace TCPConn {
         pimpl->Update(nMaxMessages, bWait);
     }
 
+    template<typename T>
+    void ITCPServer<T>::Run() {
+        pimpl->Run();
+    }
+
 
     /* ----- TCPServerImpl ----- */
 
+    template <typename T>
+    std::atomic<bool> TCPServerImpl<T>::m_bShuttingDown = false;
+    
     template <typename T>
     TCPServerImpl<T>::TCPServerImpl(ITCPServer<T>& interface, uint16_t port)
             : _interface(interface), m_port(port), m_acceptor(m_context, ip::tcp::endpoint(ip::tcp::v4(), port)) {
@@ -57,6 +66,7 @@ namespace TCPConn {
     template <typename T>
     TCPServerImpl<T>::~TCPServerImpl() {
         Stop();
+        INFO_MSG("[SERVER] Terminated cleanly.");
     }
 
     template <typename T>
@@ -69,18 +79,15 @@ namespace TCPConn {
             ERROR_MSG("[SERVER] Exception: %s", e.what());
             return false;
         }
-        INFO_MSG("[SERVER] Started at :%d.", m_port);
-        m_bServerRunning = true;
+        INFO_MSG("[SERVER] Accepting connect at :%d.", m_port);
         return true;
     }
 
     template <typename T>
     void TCPServerImpl<T>::Stop() {
-        if (!m_bServerRunning) return;
-        m_bServerRunning = false;
+        m_qMessagesIn.exit_wait();
         m_context.stop();
         if (m_thrContext.joinable()) m_thrContext.join();
-        INFO_MSG("[SERVER] Stopped!");
     }
 
     template <typename T>
@@ -93,7 +100,7 @@ namespace TCPConn {
                         auto new_conn = std::make_shared<ITCPConn<T>>(ITCPConn<T>::EOwner::server, tcp_context, m_qMessagesIn);
                         if (_interface.OnClientConnectionRequest(new_conn)) {
                             m_deqConns.push_back(std::move(new_conn));
-                            m_deqConns.back()->ConnectToClient(m_idCounter++);
+                            m_deqConns.back()->ConnectToClient(m_idCounter++ % 10000 + 10000);  // TODO virtual function GenerateID()
                             _interface.OnClientConnected(m_deqConns.back());
                             INFO_MSG("[%d] Connection approved.", m_deqConns.back()->GetID());
                         } 
@@ -154,6 +161,28 @@ namespace TCPConn {
         }
     }
 
+    template<typename T>
+    void TCPServerImpl<T>::Run() {
+        INFO_MSG("[SERVER] Running...");
+        std::signal(SIGINT, [](int) {
+            if (m_bShuttingDown) abort();
+            m_bShuttingDown = true;
+        });
+        
+        auto thr_shutdown_detect = std::thread([this]() {
+            while (!m_bShuttingDown) {
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+            }
+            INFO_MSG("\n[SERVER] Signal received, exiting running...");
+            Stop(); 
+        });
+        
+        while (!m_bShuttingDown) Update();
+        thr_shutdown_detect.join();
+        INFO_MSG("[SERVER] Running exited.");
+    }
+    
+    
     template class ITCPServer<TCPMsg>;
     template class ITCPServer<TCPRawMsg>;
     

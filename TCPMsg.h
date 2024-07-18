@@ -8,6 +8,9 @@
 #include <cstdint>
 #include <vector>
 #include <iostream>
+#include <cstring>
+#include <memory>
+#include <utility>
 
 namespace TCPConn {
     

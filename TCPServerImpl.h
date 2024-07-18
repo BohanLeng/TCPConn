@@ -27,16 +27,17 @@ namespace TCPConn {
         void MessageAllClients(const T& msg, std::shared_ptr<ITCPConn<T>> pIgnoreClient = nullptr);
 
         void Update(size_t nMaxMessages = -1, bool bWait = true);
-
+        void Run();
+        
     protected:
         TCPMsgQueue<TCPMsgOwned<T>> m_qMessagesIn;
         std::deque<std::shared_ptr<ITCPConn<T>>> m_deqConns;
         io_context m_context;
         std::thread m_thrContext;
-        std::atomic<bool> m_bServerRunning{false};
         ip::tcp::acceptor m_acceptor;
         uint16_t m_port;
-        uint32_t m_idCounter = 10000;
+        uint32_t m_idCounter = 1;
+        static std::atomic<bool> m_bShuttingDown;
         
     private:
         ITCPServer<T>& _interface;

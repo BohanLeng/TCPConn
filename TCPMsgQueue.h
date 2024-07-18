@@ -7,6 +7,9 @@
 
 #include <deque>
 #include <mutex>
+#include <condition_variable>
+
+static_assert(std::atomic<bool>::is_always_lock_free);
 
 namespace TCPConn {
 
@@ -31,14 +34,14 @@ namespace TCPConn {
         void push_back(const T& item) {
             std::scoped_lock lock(m_mutex);
             m_queue.emplace_back(std::move(item));
-            std::unique_lock<std::mutex> ul(m_mtxBlocking);
+            { std::unique_lock<std::mutex> ul(m_mtxBlocking); }
             m_cvBlocking.notify_one();
         }
 
         void push_front(const T& item) {
             std::scoped_lock lock(m_mutex);
             m_queue.emplace_front(std::move(item));
-            std::unique_lock<std::mutex> ul(m_mtxBlocking);
+            { std::unique_lock<std::mutex> ul(m_mtxBlocking); }
             m_cvBlocking.notify_one();
         }
 
@@ -72,10 +75,14 @@ namespace TCPConn {
         }
         
         void wait() {
-            while (empty()) {
-                std::unique_lock<std::mutex> ul(m_mtxBlocking);
-                m_cvBlocking.wait(ul);
-            }
+            std::unique_lock<std::mutex> ul(m_mtxBlocking);
+            m_cvBlocking.wait(ul, [this](){ return !empty() || m_bExiting; });
+        }
+        
+        void exit_wait() {
+            { std::unique_lock<std::mutex> ul(m_mtxBlocking); }
+            m_bExiting = true;
+            m_cvBlocking.notify_one();
         }
 
     protected:
@@ -83,6 +90,7 @@ namespace TCPConn {
         std::deque<T> m_queue;
         std::condition_variable m_cvBlocking;
         std::mutex m_mtxBlocking;
+        std::atomic<bool> m_bExiting{false};
     };
 
 } // TCPConn

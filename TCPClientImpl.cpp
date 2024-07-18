@@ -5,6 +5,7 @@
 #include "TCPClientImpl.h"
 #include "TCPConnImpl.h"
 #include "LogMacros.h"
+#include <csignal>
 
 namespace TCPConn {
 
@@ -48,9 +49,17 @@ namespace TCPConn {
         pimpl->Update(nMaxMessages, bWait);
     }
 
+    template<typename T>
+    void ITCPClient<T>::Run() {
+        pimpl->Run();
+    }
+
 
     /* ----- TCPClientImpl ----- */
 
+    template <typename T>
+    std::atomic<bool> TCPClientImpl<T>::m_bShuttingDown = false;
+    
     template <typename T>
     TCPClientImpl<T>::TCPClientImpl(ITCPClient<T>& interface)
         : _interface(interface), m_socket(m_context) {}
@@ -75,7 +84,6 @@ namespace TCPConn {
             m_connection->ConnectToServer(tcp_endpoint, [this]() { _interface.OnConnected(); });
 
             m_thrContext = std::thread([this]() { m_context.run(); });
-            m_bClientRunning = true;
             return true;
         } catch (std::exception& e) {
             ERROR_MSG("Client Exception: %s", e.what());
@@ -85,10 +93,10 @@ namespace TCPConn {
 
     template <typename T>
     void TCPClientImpl<T>::Disconnect() {
-        if (!m_bClientRunning) return;
         if (IsConnected()) {
             m_connection->Disconnect();
         }
+        m_qMessagesIn.exit_wait();
         m_context.stop();
         if (m_thrContext.joinable()) {
             m_thrContext.join();
@@ -99,7 +107,7 @@ namespace TCPConn {
 
     template <typename T>
     bool TCPClientImpl<T>::IsConnected() const {
-        return m_connection ? m_connection->IsConnected() : false;
+        return m_connection && m_connection->IsConnected();
     }
 
     template <typename T>
@@ -121,6 +129,27 @@ namespace TCPConn {
             _interface.OnMessage(msg.msg);
             nMessageCount++;
         }
+    }
+
+    template<typename T>
+    void TCPClientImpl<T>::Run() {
+        INFO_MSG("Client consuming messages...");
+        std::signal(SIGINT, [](int) {
+            if (m_bShuttingDown) abort();
+            m_bShuttingDown = true;
+        });
+
+        auto thr_shutdown_detect = std::thread([this]() {
+            while (!m_bShuttingDown) {
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+            }
+            INFO_MSG("\nSignal received, exiting running...");
+            m_qMessagesIn.exit_wait();
+        });
+
+        while (!m_bShuttingDown) Update();
+        thr_shutdown_detect.join();
+        INFO_MSG("Running exited.");
     }
 
     template class ITCPClient<TCPMsg>;

@@ -26,6 +26,7 @@ namespace TCPConn {
         void Send(const T& msg) const;
 
         void Update(size_t nMaxMessages = -1, bool bWait = true);
+        void Run();
 
         TCPMsgQueue<TCPMsgOwned<T>>& Incoming();
 
@@ -36,7 +37,7 @@ namespace TCPConn {
         std::unique_ptr<ITCPConn<T>> m_connection;
         TCPMsgQueue<TCPMsgOwned<T>> m_qMessagesIn;
         bool m_bIsDestroying;
-        std::atomic<bool> m_bClientRunning{false};
+        static std::atomic<bool> m_bShuttingDown;
 
     private:
         ITCPClient<T>& _interface;

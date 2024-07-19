@@ -36,7 +36,7 @@ namespace TCPConn {
         ip::tcp::socket m_socket;
         std::unique_ptr<ITCPConn<T>> m_connection;
         TCPMsgQueue<TCPMsgOwned<T>> m_qMessagesIn;
-        bool m_bIsDestroying;
+        bool m_bIsDestroying{};
         static std::atomic<bool> m_bShuttingDown;
 
     private:

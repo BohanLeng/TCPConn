@@ -5,6 +5,26 @@
 #ifndef ZMONITOR_TCPMSG_H
 #define ZMONITOR_TCPMSG_H
 
+#if defined _WIN32
+#   if defined TCPCONN_STATIC
+#       define TCPCONN_API
+#   elif defined TCPCONN_DLL
+#       define TCPCONN_API __declspec(dllexport)
+#   else
+#       define TCPCONN_API __declspec(dllimport)
+#   endif
+#elif defined __APPLE__ || defined __linux__
+#   if defined TCPCONN_STATIC
+#       define TCPCONN_API
+#   elif defined TCPCONN_DLL
+#       define TCPCONN_API __attribute__((visibility("default")))
+#   else
+#       define TCPCONN_API
+#   endif
+#else
+#   define TCPCONN_API
+#endif
+
 #include <cstdint>
 #include <vector>
 #include <iostream>

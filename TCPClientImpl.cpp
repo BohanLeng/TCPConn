@@ -102,7 +102,10 @@ namespace TCPConn {
             m_thrContext.join();
         }
         m_connection.reset();
-        if(!m_bIsDestroying) _interface.OnDisconnected();
+        if(!m_bIsDestroying) {
+            INFO_MSG("Client disconnected.");
+            _interface.OnDisconnected();
+        }
     }
 
     template <typename T>

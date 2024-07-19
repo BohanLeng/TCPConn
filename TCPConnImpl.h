@@ -71,7 +71,7 @@ namespace TCPConn {
         uint64_t m_nValidationIn = 0;
         uint64_t m_nValidationCheck = 0;
         
-        ITCPConn<T>::EOwner m_nOwnerType;
+        ITCPConn<T>::EOwner m_eOwnerType;
         uint32_t id = -1;
         
     private:

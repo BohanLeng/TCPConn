@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 
 project(TCPConn)
 
-add_library(${PROJECT_NAME} SHARED TCPConnImpl.cpp TCPClientImpl.cpp TCPServerImpl.cpp)
+add_library(${PROJECT_NAME} SHARED TCPConnImpl.cpp TCPClientImpl.cpp TCPServerImpl.cpp TCPRawMsgSenderImpl.cpp)
 target_compile_definitions(${PROJECT_NAME} PRIVATE TCPCONN_DLL)
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${ROOT_DIR}/include)

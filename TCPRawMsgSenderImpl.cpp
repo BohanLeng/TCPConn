@@ -71,6 +71,10 @@ namespace TCPConn {
     }
 
     bool TCPRawMsgSenderImpl::Connect(const std::string &host, uint16_t port) {
+        if (IsConnected()) {
+            ERROR_MSG("Already connected.");
+            return false;
+        }
         try {
             ip::tcp::resolver resolver(m_context);
             ip::tcp::resolver::results_type endpoint = resolver.resolve(host, std::to_string(port));

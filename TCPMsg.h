@@ -31,6 +31,7 @@
 #include <cstring>
 #include <memory>
 #include <utility>
+#include <iomanip>
 
 namespace TCPConn {
     
@@ -81,14 +82,14 @@ namespace TCPConn {
         [[nodiscard]] size_t full_size() const {
             return body.size();
         }
-        
+
         friend std::ostream& operator << (std::ostream& os, const TCPRawMsg& msg) {
             os << "Raw data (size " << std::dec << msg.full_size() << "): \n";
-            // print hexadecimal value of the raw byte message:
+            os << std::uppercase << std::hex; // Set to output hexadecimal values in uppercase
             for (const auto& byte : msg.body) {
-                os << std::hex << static_cast<int>(byte) << ' ';
+                os << std::setw(2) << std::setfill('0') << static_cast<int>(byte) << ' ';
             }
-            os << '\n';
+            os << std::nouppercase << '\n'; // Reset to default state
             return os;
         }
 
@@ -99,6 +100,13 @@ namespace TCPConn {
             size_t size = msg.body.size();
             msg.body.resize(size + sizeof(T));
             std::memcpy(msg.body.data() + size, &data, sizeof(T));
+            return msg;
+        }
+
+        friend TCPRawMsg& operator << (TCPRawMsg& msg, const std::string& data) {
+            for (char c : data) {
+                msg.body.push_back(static_cast<uint8_t>(c));
+            }
             return msg;
         }
 

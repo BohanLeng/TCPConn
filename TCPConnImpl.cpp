@@ -91,6 +91,8 @@ namespace TCPConn {
 
     template <typename T>
     void TCPConnImpl<T>::ConnectToServer(const struct ITCPConn<T>::TCPEndpoint &endpoint, const std::function<void()>& OnConnectedCallback) {
+        if (IsConnected()) 
+            ERROR_MSG("Already connected.");
         if (m_eOwnerType == ITCPConn<T>::EOwner::client) {
             async_connect(m_socket, endpoint.endpoint,
                           [this, OnConnectedCallback](std::error_code ec, ip::tcp::endpoint endpoint) {

@@ -56,7 +56,7 @@ namespace TCPConn {
         template <typename T>
         friend TCPMsg& operator << (TCPMsg& msg, const T& data) {
             static_assert(std::is_standard_layout<T>::value, 
-                    "Data is too complex to be pushed into vector");
+                    "Data layout is not standard.");
             size_t size = msg.body.size();
             msg.body.resize(size + sizeof(T));
             std::memcpy(msg.body.data() + size, &data, sizeof(T));
@@ -67,7 +67,7 @@ namespace TCPConn {
         template <typename T>
         friend TCPMsg& operator >> (TCPMsg& msg, T& data) {
             static_assert(std::is_standard_layout<T>::value, 
-                    "Data is too complex to be pushed into vector");
+                    "Data layout is not standard.");
             size_t size = msg.body.size() - sizeof(T);
             std::memcpy(&data, msg.body.data() + size, sizeof(T));
             msg.body.resize(size);
@@ -96,7 +96,7 @@ namespace TCPConn {
         template <typename T>
         friend TCPRawMsg& operator << (TCPRawMsg& msg, const T& data) {
             static_assert(std::is_standard_layout<T>::value, 
-                    "Data is too complex to be pushed into vector");
+                    "Data layout is not standard.");
             size_t size = msg.body.size();
             msg.body.resize(size + sizeof(T));
             std::memcpy(msg.body.data() + size, &data, sizeof(T));
@@ -104,18 +104,23 @@ namespace TCPConn {
         }
 
         friend TCPRawMsg& operator << (TCPRawMsg& msg, const std::string& data) {
-            for (char c : data) {
-                msg.body.push_back(static_cast<uint8_t>(c));
-            }
+            msg.body.insert(msg.body.end(), data.begin(), data.end());
             return msg;
         }
 
         template <typename T>
         friend TCPRawMsg& operator >> (TCPRawMsg& msg, T& data) {
             static_assert(std::is_standard_layout<T>::value, 
-                    "Data is too complex to be pushed into vector");
+                    "Data layout is not standard.");
             size_t size = msg.body.size() - sizeof(T);
             std::memcpy(&data, msg.body.data() + size, sizeof(T));
+            msg.body.resize(size);
+            return msg;
+        }
+        
+        friend TCPRawMsg& operator >> (TCPRawMsg& msg, std::string& data) {
+            size_t size = msg.body.size() - data.length();
+            std::memcpy(data.data(), msg.body.data() + size, data.length());
             msg.body.resize(size);
             return msg;
         }

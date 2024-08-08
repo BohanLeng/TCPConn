@@ -31,6 +31,7 @@ namespace TCPConn {
         virtual ~TCPConnImpl();
 
         [[nodiscard]] uint32_t GetID() const;
+        std::string GetRemoteEndpoint() const;
 
         void ConnectToClient(uint32_t uid = 0);
         void ConnectToServer(const struct ITCPConn<T>::TCPEndpoint &endpoint, const std::function<void()>& OnConnectedCallback);

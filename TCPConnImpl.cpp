@@ -25,6 +25,11 @@ namespace TCPConn {
     uint32_t ITCPConn<T>::GetID() const {
         return pimpl->GetID();
     }
+    
+    template<typename T>
+    std::string ITCPConn<T>::GetRemoteEndpoint() const {
+        return std::move(pimpl->GetRemoteEndpoint());
+    }
 
     template <typename T>
     void ITCPConn<T>::ConnectToClient(uint32_t uid) {
@@ -72,6 +77,11 @@ namespace TCPConn {
     template <typename T>
     uint32_t TCPConnImpl<T>::GetID() const {
         return id;
+    }
+    
+    template<typename T>
+    std::string TCPConnImpl<T>::GetRemoteEndpoint() const {
+        return std::move(m_socket.remote_endpoint().address().to_string());
     }
 
     template <typename T>

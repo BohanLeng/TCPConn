@@ -59,6 +59,10 @@ namespace TCPConn {
         /// \brief Check if the connection is open.
         /// \return true if the connection is open
         [[nodiscard]] bool IsConnected() const;
+        
+        /// \brief Get the ip address of the remote endpoint.
+        /// \return ip address of the remote endpoint
+        [[nodiscard]] std::string GetRemoteEndpoint() const;
 
         
         /// \brief Send a message to the other end.

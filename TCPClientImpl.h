@@ -25,7 +25,7 @@ namespace TCPConn {
 
         void Send(const T& msg) const;
 
-        void Update(size_t nMaxMessages = -1, bool bWait = true);
+        void Update(bool bWait, size_t nMaxMessages = -1);
         void Run();
 
         TCPMsgQueue<TCPMsgOwned<T>>& Incoming();

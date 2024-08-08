@@ -26,7 +26,7 @@ namespace TCPConn {
         void MessageClient(std::shared_ptr<ITCPConn<T>> client, const T& msg);
         void MessageAllClients(const T& msg, std::shared_ptr<ITCPConn<T>> pIgnoreClient = nullptr);
 
-        void Update(size_t nMaxMessages = -1, bool bWait = true);
+        void Update(bool bWait, size_t nMaxMessages = -1);
         void Run();
         
     protected:

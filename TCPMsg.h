@@ -49,7 +49,7 @@ namespace TCPConn {
         }
         
         friend std::ostream& operator << (std::ostream& os, const TCPMsg& msg) {
-            os << "Message type: " << msg.header.type << ", size: " << msg.header.size;
+            os << "Message type: " << msg.header.type << ", size: " << msg.header.size << std::endl;
             return os;
         }
 
@@ -85,11 +85,11 @@ namespace TCPConn {
 
         friend std::ostream& operator << (std::ostream& os, const TCPRawMsg& msg) {
             os << "Raw data (size " << std::dec << msg.full_size() << "): \n";
-            os << std::uppercase << std::hex; // Set to output hexadecimal values in uppercase
+            os << std::uppercase << std::hex; 
             for (const auto& byte : msg.body) {
                 os << std::setw(2) << std::setfill('0') << static_cast<int>(byte) << ' ';
             }
-            os << std::nouppercase << '\n'; // Reset to default state
+            os << std::nouppercase << '\n'; 
             return os;
         }
 

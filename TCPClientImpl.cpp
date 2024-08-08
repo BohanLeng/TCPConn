@@ -45,8 +45,8 @@ namespace TCPConn {
     }
 
     template <typename T>
-    void ITCPClient<T>::Update(size_t nMaxMessages, bool bWait) {
-        pimpl->Update(nMaxMessages, bWait);
+    void ITCPClient<T>::Update(bool bWait, size_t nMaxMessages) {
+        pimpl->Update(bWait, nMaxMessages);
     }
 
     template<typename T>
@@ -124,7 +124,7 @@ namespace TCPConn {
     }
 
     template <typename T>
-    void TCPClientImpl<T>::Update(size_t nMaxMessages, bool bWait) {
+    void TCPClientImpl<T>::Update(bool bWait, size_t nMaxMessages) {
         if (bWait) m_qMessagesIn.wait();
         size_t nMessageCount = 0;
         while (nMessageCount < nMaxMessages && !m_qMessagesIn.empty()) {
@@ -150,7 +150,7 @@ namespace TCPConn {
             m_qMessagesIn.exit_wait();
         });
 
-        while (!m_bShuttingDown) Update();
+        while (!m_bShuttingDown) Update(true);
         thr_shutdown_detect.join();
         INFO_MSG("Running exited.");
     }

@@ -43,8 +43,8 @@ namespace TCPConn {
     }
 
     template <typename T>
-    void ITCPServer<T>::Update(size_t nMaxMessages, bool bWait) {
-        pimpl->Update(nMaxMessages, bWait);
+    void ITCPServer<T>::Update(bool bWait, size_t nMaxMessages) {
+        pimpl->Update(bWait, nMaxMessages);
     }
 
     template<typename T>
@@ -151,7 +151,7 @@ namespace TCPConn {
     }
 
     template <typename T>
-    void TCPServerImpl<T>::Update(size_t nMaxMessages, bool bWait) {
+    void TCPServerImpl<T>::Update(bool bWait, size_t nMaxMessages) {
         if (bWait) m_qMessagesIn.wait();
         size_t nMessageCount = 0;
         while (nMessageCount < nMaxMessages && !m_qMessagesIn.empty()) {
@@ -177,7 +177,7 @@ namespace TCPConn {
             Stop(); 
         });
         
-        while (!m_bShuttingDown) Update();
+        while (!m_bShuttingDown) Update(true);
         thr_shutdown_detect.join();
         INFO_MSG("[SERVER] Running exited.");
     }

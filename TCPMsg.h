@@ -48,15 +48,11 @@ namespace TCPConn {
             return sizeof(TCPMsgHeader) + body.size();
         }
         
-        friend std::ostream& operator << (std::ostream& os, const TCPMsg& msg) {
-            os << "Message type: " << msg.header.type << ", size: " << msg.header.size << std::endl;
-            return os;
-        }
-
+        // Input generic data
         template <typename T>
         friend TCPMsg& operator << (TCPMsg& msg, const T& data) {
             static_assert(std::is_standard_layout<T>::value, 
-                    "Data layout is not standard.");
+                    "Data layout is not standard. Input structure content separately.");
             size_t size = msg.body.size();
             msg.body.resize(size + sizeof(T));
             std::memcpy(msg.body.data() + size, &data, sizeof(T));
@@ -64,15 +60,60 @@ namespace TCPConn {
             return msg;
         }
 
+        // Input vector
+        template <typename T>
+        friend TCPMsg& operator << (TCPMsg& msg, const std::vector<T>& data) {
+            static_assert(std::is_standard_layout<T>::value,
+                          "Vector data layout is not standard.");
+            size_t size = msg.body.size();
+            msg.body.resize(size + sizeof(T) * data.size());
+            std::memcpy(msg.body.data() + size, data.data(), sizeof(T) * data.size());
+            msg.header.size = msg.full_size();
+            return msg;
+        }
+        
+        // Output generic data
         template <typename T>
         friend TCPMsg& operator >> (TCPMsg& msg, T& data) {
             static_assert(std::is_standard_layout<T>::value, 
-                    "Data layout is not standard.");
+                    "Data layout is not standard. Output structure content separately.");
             size_t size = msg.body.size() - sizeof(T);
             std::memcpy(&data, msg.body.data() + size, sizeof(T));
             msg.body.resize(size);
             msg.header.size = msg.full_size();
             return msg;
+        }
+    
+        // Output string
+        friend TCPMsg& operator >> (TCPMsg& msg, std::string& data) {
+            size_t size = msg.body.size() - data.length();
+            std::memcpy(data.data(), msg.body.data() + size, data.length());
+            msg.body.resize(size);
+            msg.header.size = msg.full_size();
+            return msg;
+        }
+        
+        // Output vector
+        template <typename T>
+        friend TCPMsg& operator >> (TCPMsg& msg, std::vector<T>& data) {
+            static_assert(std::is_standard_layout<T>::value,
+                          "Vector data layout is not standard.");
+            size_t size = msg.body.size() - sizeof(T) * data.size();
+            std::memcpy(data.data(), msg.body.data() + size, sizeof(T) * data.size());
+            msg.body.resize(size);
+            msg.header.size = msg.full_size();
+            return msg;
+        }
+
+        // Print message in bytes
+        friend std::ostream& operator << (std::ostream& os, const TCPMsg& msg) {
+            os << "Message type: " << msg.header.type << ", size: " << msg.header.size << ", raw data: " << std::endl;
+            os << std::uppercase << std::hex;
+            for (const auto& byte : msg.body) {
+                os << std::setw(2) << std::setfill('0') << static_cast<int>(byte) << ' ';
+            }
+            os << std::nouppercase << std::dec << '\n';
+            return os;
         }
     };
 
@@ -83,26 +124,17 @@ namespace TCPConn {
             return body.size();
         }
 
-        friend std::ostream& operator << (std::ostream& os, const TCPRawMsg& msg) {
-            os << "Raw data (size " << std::dec << msg.full_size() << "): \n";
-            os << std::uppercase << std::hex; 
-            for (const auto& byte : msg.body) {
-                os << std::setw(2) << std::setfill('0') << static_cast<int>(byte) << ' ';
-            }
-            os << std::nouppercase << '\n'; 
-            return os;
-        }
-
         template <typename T>
         friend TCPRawMsg& operator << (TCPRawMsg& msg, const T& data) {
             static_assert(std::is_standard_layout<T>::value, 
-                    "Data layout is not standard.");
+                    "Data layout is not standard. Input structure content separately.");
             size_t size = msg.body.size();
             msg.body.resize(size + sizeof(T));
             std::memcpy(msg.body.data() + size, &data, sizeof(T));
             return msg;
         }
 
+        // Input string
         friend TCPRawMsg& operator << (TCPRawMsg& msg, const std::string& data) {
             msg.body.insert(msg.body.end(), data.begin(), data.end());
             return msg;
@@ -123,6 +155,16 @@ namespace TCPConn {
             std::memcpy(data.data(), msg.body.data() + size, data.length());
             msg.body.resize(size);
             return msg;
+        }
+
+        friend std::ostream& operator << (std::ostream& os, const TCPRawMsg& msg) {
+            os << "Raw data (size " << msg.full_size() << "): \n";
+            os << std::uppercase << std::hex;
+            for (const auto& byte : msg.body) {
+                os << std::setw(2) << std::setfill('0') << static_cast<int>(byte) << ' ';
+            }
+            os << std::nouppercase << std::dec << '\n';
+            return os;
         }
     };
 

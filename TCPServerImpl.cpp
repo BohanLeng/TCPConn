@@ -117,13 +117,12 @@ namespace TCPConn {
     void TCPServerImpl<T>::MessageClient(std::shared_ptr<ITCPConn<T>> client, const T& msg) {
         if (client && client->IsConnected()) {
             client->Send(msg);
-        } else {
+        } else if (client) {
             _interface.OnClientDisconnected(client);
             client.reset();
             m_deqConns.erase(
                     std::remove(m_deqConns.begin(), m_deqConns.end(), client),
                     m_deqConns.end());
-
         }
     }
 
@@ -137,7 +136,7 @@ namespace TCPConn {
                     client->Send(msg);
                     DEBUG_MSG("[SERVER] Message sent to [%d]", client->GetID());
                 }
-            } else {
+            } else if (client) {
                 _interface.OnClientDisconnected(client);
                 client.reset();
                 bInvalidClientExists = true;

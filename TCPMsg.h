@@ -93,14 +93,14 @@ namespace TCPConn {
             return msg;
         }
         
-        // Output vector
+        // Output vector (assert msg contains solely this vector)
         template <typename T>
         friend TCPMsg& operator >> (TCPMsg& msg, std::vector<T>& data) {
             static_assert(std::is_standard_layout<T>::value,
                           "Vector data layout is not standard.");
-            size_t size = msg.body.size() - sizeof(T) * data.size();
-            std::memcpy(data.data(), msg.body.data() + size, sizeof(T) * data.size());
-            msg.body.resize(size);
+            data.resize(msg.body.size() / sizeof(T));
+            std::memcpy(data.data(), msg.body.data(), msg.body.size());
+            msg.body.resize(0);
             msg.header.size = msg.full_size();
             return msg;
         }

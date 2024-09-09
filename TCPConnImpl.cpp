@@ -107,7 +107,7 @@ namespace TCPConn {
             async_connect(m_socket, endpoint.endpoint,
                           [this, OnConnectedCallback](std::error_code ec, ip::tcp::endpoint endpoint) {
                               if (!ec) {
-                                  INFO_MSG("Connected to server: %s", endpoint.address().to_string().c_str());
+                                  INFO_MSG("Connected to server at {}", endpoint.address().to_string());
                                   if constexpr (std::is_same<T, TCPMsg>::value) {
                                       ReadValidation(OnConnectedCallback);
                                   }
@@ -116,7 +116,7 @@ namespace TCPConn {
                                       ReadRaw();
                                   }
                               } else {
-                                  INFO_MSG("Connect fail: %s", ec.message().c_str());
+                                  INFO_MSG("Connect fail: {}", ec.message());
                                   m_socket.close();
                               }
                           });
@@ -171,7 +171,7 @@ namespace TCPConn {
                                }
                            } else {
                                if (m_eOwnerType == ITCPConn<T>::EOwner::server)
-                                   INFO_MSG("[%d] Read header fail, closing connection.", id);
+                                   INFO_MSG("[Client {:02}] Read header fail, closing connection.", id);
                                else
                                    INFO_MSG("Read header from server fail, closing connection.");
                                m_socket.close();
@@ -188,7 +188,7 @@ namespace TCPConn {
                                AddToIncomingMessageQueue();
                            } else {
                                if (m_eOwnerType == ITCPConn<T>::EOwner::server)
-                                   INFO_MSG("[%d] Read body fail, closing connection.", id);
+                                   INFO_MSG("[Client {:02}] Read body fail, closing connection.", id);
                                else
                                    INFO_MSG("Read body from server fail, closing connection.");
                                m_socket.close();
@@ -212,7 +212,7 @@ namespace TCPConn {
                                 }
                             } else {
                                 if (m_eOwnerType == ITCPConn<T>::EOwner::server)
-                                    INFO_MSG("[%d] Write header fail, closing connection.", id);
+                                    INFO_MSG("[Client {:02}] Write header fail, closing connection.", id);
                                 else
                                     INFO_MSG("Write header to server fail, closing connection.");
                                 m_socket.close();
@@ -232,7 +232,7 @@ namespace TCPConn {
                                 }
                             } else {
                                 if (m_eOwnerType == ITCPConn<T>::EOwner::server)
-                                    INFO_MSG("[%d] Write body fail, closing connection.", id);
+                                    INFO_MSG("[Client {:02}] Write body fail, closing connection.", id);
                                 else
                                     INFO_MSG("Write body to server fail, closing connection.");
                                 m_socket.close();
@@ -262,7 +262,7 @@ namespace TCPConn {
                                            AddToIncomingMessageQueue();
                                        } else {
                                            if (m_eOwnerType == ITCPConn<T>::EOwner::server)
-                                               INFO_MSG("[%d] Receive raw message fail, closing connection.", id);
+                                               INFO_MSG("[Client {:02}] Receive raw message fail, closing connection.", id);
                                            else
                                                INFO_MSG("Receive raw message from server fail, closing connection.");
                                            m_socket.close();
@@ -283,7 +283,7 @@ namespace TCPConn {
                             }
                         } else {
                             if (m_eOwnerType == ITCPConn<T>::EOwner::server)
-                                INFO_MSG("[%d] Write raw message fail, closing connection.", id);
+                                INFO_MSG("[Client {:02}] Write raw message fail, closing connection.", id);
                             else
                                 INFO_MSG("Write raw message to server fail, closing connection.");
                             m_socket.close();
@@ -297,7 +297,7 @@ namespace TCPConn {
             async_write(m_socket, buffer(&m_nValidationOut, sizeof(uint64_t)),
                         [this](std::error_code ec, std::size_t length) {
                             if (ec) {
-                                INFO_MSG("[%d] Write validation message fail, closing connection.", id);
+                                INFO_MSG("[Client {:02}] Write validation message fail, closing connection.", id);
                                 m_socket.close();
                             }
                         });
@@ -310,16 +310,16 @@ namespace TCPConn {
                        [this](std::error_code ec, std::size_t length) {
                            if (!ec) {
                                if (m_nValidationIn == m_nValidationCheck) {
-                                   INFO_MSG("[%d] New client validated.", id);
+                                   INFO_MSG("[Client {:02}] New client validated.", id);
                                    NotifyValidation();
                                    if constexpr (std::is_same<T, TCPMsg>::value) ReadHeader();
                                    else if constexpr (std::is_same<T, TCPRawMsg>::value) ReadRaw();
                                } else {
-                                   INFO_MSG("[%d] Client validation message fail, refusing connection.", id);
+                                   INFO_MSG("[Client {:02}] Client validation message fail, refusing connection.", id);
                                    m_socket.close();
                                }
                            } else {
-                               INFO_MSG("[%d] Read validation message fail, closing connection.", id);
+                               INFO_MSG("[Client {:02}] Read validation message fail, closing connection.", id);
                                m_socket.close();
                            }
                        });
@@ -360,9 +360,9 @@ namespace TCPConn {
             async_write(m_socket, buffer(&m_nValidationCheck, sizeof(uint64_t)),
                         [this](std::error_code ec, std::size_t length) {
                             if (!ec) {
-                                INFO_MSG("[%d] Validation notification sent to client.", id);
+                                INFO_MSG("[Client {:02}] Validation notification sent to client.", id);
                             } else {
-                                INFO_MSG("[%d] Notify validation fail, closing connection.", id);
+                                INFO_MSG("[Client {:02}] Notify validation fail, closing connection.", id);
                                 m_socket.close();
                             }
                         });

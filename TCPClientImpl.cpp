@@ -79,14 +79,14 @@ namespace TCPConn {
             struct ITCPConn<T>::TCPContext tcp_context{m_context, ip::tcp::socket(m_context)};
             m_connection = std::make_unique<ITCPConn<T>>(ITCPConn<T>::EOwner::client, tcp_context, m_qMessagesIn);
 
-            INFO_MSG("Connecting to %s:%d", host.c_str(), port);
+            INFO_MSG("Connecting to {}:{}", host, port);
             struct ITCPConn<T>::TCPEndpoint tcp_endpoint{endpoint};
             m_connection->ConnectToServer(tcp_endpoint, [this]() { _interface.OnConnected(); });
 
             m_thrContext = std::thread([this]() { m_context.run(); });
             return true;
         } catch (std::exception& e) {
-            ERROR_MSG("Client Exception: %s", e.what());
+            ERROR_MSG("Client Exception: {}", e.what());
             return false;
         }
     }

@@ -76,10 +76,10 @@ namespace TCPConn {
             m_thrContext = std::thread([this]() { m_context.run(); });
         }
         catch (std::exception& e) {
-            ERROR_MSG("[SERVER] Exception: %s", e.what());
+            ERROR_MSG("[SERVER] Exception: {}", e.what());
             return false;
         }
-        INFO_MSG("[SERVER] Accepting connect at :%d.", m_port);
+        INFO_MSG("[SERVER] Accepting connect at :{}.", m_port);
         return true;
     }
 
@@ -95,19 +95,19 @@ namespace TCPConn {
         m_acceptor.async_accept(
                 [this](std::error_code ec, ip::tcp::socket socket) {
                     if (!ec) {
-                        INFO_MSG("[SERVER] New Connection: %s", socket.remote_endpoint().address().to_string().c_str());
+                        INFO_MSG("[SERVER] New Connection: {}", socket.remote_endpoint().address().to_string());
                         struct ITCPConn<T>::TCPContext tcp_context{ m_context, std::move(socket) };
                         auto new_conn = std::make_shared<ITCPConn<T>>(ITCPConn<T>::EOwner::server, tcp_context, m_qMessagesIn);
                         if (_interface.OnClientConnectionRequest(new_conn)) {
                             m_deqConns.push_back(std::move(new_conn));
-                            m_deqConns.back()->ConnectToClient(m_idCounter++ % 10000 + 10000);  // TODO virtual function GenerateID()
+                            m_deqConns.back()->ConnectToClient(m_idCounter++ % 100);  // TODO virtual function GenerateID()
                             _interface.OnClientConnected(m_deqConns.back());
-                            INFO_MSG("[%d] Connection approved.", m_deqConns.back()->GetID());
+                            INFO_MSG("[Client {:02}] Connection approved.", m_deqConns.back()->GetID());
                         } 
                         else
                             INFO_MSG("[SERVER] Connection denied!");
                     } else {
-                        ERROR_MSG("[SERVER] New connection error: %s", ec.message().c_str());
+                        ERROR_MSG("[SERVER] New connection error: {}", ec.message());
                     }
                     WaitForClientConnection();
                 });
@@ -134,7 +134,7 @@ namespace TCPConn {
             if (client && client->IsConnected()) {
                 if (client != pIgnoreClient) {
                     client->Send(msg);
-                    DEBUG_MSG("[SERVER] Message sent to [%d]", client->GetID());
+                    DEBUG_MSG("[SERVER] Message sent to [Client {:02}]", client->GetID());
                 }
             } else if (client) {
                 _interface.OnClientDisconnected(client);

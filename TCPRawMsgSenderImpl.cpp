@@ -81,19 +81,19 @@ namespace TCPConn {
             async_connect(m_socket, endpoint, 
                     [this](std::error_code ec, ip::tcp::endpoint endpoint) {
                         if (!ec) {
-                            INFO_MSG("Connected to: %s", endpoint.address().to_string().c_str());
+                            INFO_MSG("Connected to: {}", endpoint.address().to_string());
                             auto async_call = std::async(std::launch::async, [this]() { _interface.OnConnected(); });
                             if (m_eMsgType == ITCPRawMsgSender::ERawMsgType::no_header) ReadRaw();
                             else ReadHeader();
                         } else {
-                            INFO_MSG("Connect fail: %s", ec.message().c_str());
+                            INFO_MSG("Connect fail: {}", ec.message());
                             m_socket.close();
                         }
                     });
             m_thrContext = std::thread([this]() { m_context.run(); });
             return true;
         } catch (std::exception& e) {
-            ERROR_MSG("Client Exception: %s", e.what());
+            ERROR_MSG("Client Exception: {}", e.what());
             return false;
         }
     }
@@ -242,7 +242,7 @@ namespace TCPConn {
                        (data[m_nLengthOffset + 2] << 16) | (data[m_nLengthOffset + 3] << 24);
             }
         } else {
-            ERROR_MSG("Invalid length size: %d", m_nLengthSize);
+            ERROR_MSG("Invalid length size: {}", m_nLengthSize);
             return 0;
         }
     }

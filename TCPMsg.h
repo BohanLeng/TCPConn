@@ -29,6 +29,7 @@
 #include <vector>
 #include <iostream>
 #include <cstring>
+#include <sstream>
 #include <memory>
 #include <utility>
 #include <iomanip>
@@ -105,14 +106,19 @@ namespace TCPConn {
             return msg;
         }
 
-        // Print message in bytes
-        friend std::ostream& operator << (std::ostream& os, const TCPMsg& msg) {
-            os << "Message type: " << msg.header.type << ", size: " << msg.header.size << ", raw data: " << std::endl;
-            os << std::uppercase << std::hex;
-            for (const auto& byte : msg.body) {
-                os << std::setw(2) << std::setfill('0') << static_cast<int>(byte) << ' ';
+        std::string formatted() const {
+            std::ostringstream oss;
+            oss << "Message type: " << header.type << ", size: " << header.size << ", raw data: " << std::endl;
+            oss << std::uppercase << std::hex;
+            for (const auto &byte: body) {
+                oss << std::setw(2) << std::setfill('0') << static_cast<int>(byte) << ' ';
             }
-            os << std::nouppercase << std::dec << '\n';
+            oss << std::nouppercase << std::dec << '\n';
+            return oss.str();
+        }
+
+        friend std::ostream& operator << (std::ostream& os, const TCPMsg& msg) {
+            os << msg.formatted();
             return os;
         }
     };
@@ -157,13 +163,19 @@ namespace TCPConn {
             return msg;
         }
 
-        friend std::ostream& operator << (std::ostream& os, const TCPRawMsg& msg) {
-            os << "Raw data (size " << msg.full_size() << "): \n";
-            os << std::uppercase << std::hex;
-            for (const auto& byte : msg.body) {
-                os << std::setw(2) << std::setfill('0') << static_cast<int>(byte) << ' ';
+        std::string formatted() const {
+            std::ostringstream oss;
+            oss << "Raw data (size " << full_size() << "): \n";
+            oss << std::uppercase << std::hex;
+            for (const auto &byte: body) {
+                oss << std::setw(2) << std::setfill('0') << static_cast<int>(byte) << ' ';
             }
-            os << std::nouppercase << std::dec << '\n';
+            oss << std::nouppercase << std::dec << '\n';
+            return oss.str();
+        }
+        
+        friend std::ostream& operator << (std::ostream& os, const TCPRawMsg& msg) {
+            os << msg.formatted();
             return os;
         }
     };

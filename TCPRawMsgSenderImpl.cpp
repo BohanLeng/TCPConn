@@ -33,6 +33,10 @@ namespace TCPConn {
         return pimpl->Connect(host, port);
     }
 
+    bool ITCPRawMsgSender::Connect(const char *host, uint16_t port) {
+        return pimpl->Connect(std::string(host), port);
+    }
+
     void ITCPRawMsgSender::Disconnect() {
         pimpl->Disconnect();
     }
@@ -42,6 +46,12 @@ namespace TCPConn {
     }
 
     void ITCPRawMsgSender::Send(const TCPRawMsg &msg) const {
+        pimpl->Send(msg);
+    }
+
+    void ITCPRawMsgSender::Send(const uint8_t *raw_msg, uint32_t length) const {
+        TCPRawMsg msg;
+        msg.body.assign(raw_msg, raw_msg + length);
         pimpl->Send(msg);
     }
 

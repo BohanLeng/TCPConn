@@ -43,6 +43,11 @@ namespace TCPConn {
         /// \param port server port
         bool Connect(const std::string& host, uint16_t port);
 
+        /// \brief Connect to a raw message recipient
+        /// \param host server address or domain name
+        /// \param port server port
+        bool Connect(const char* host, uint16_t port);
+
         /// \brief Disconnect from the server, will be called automatically on destruction
         void Disconnect();
 
@@ -54,6 +59,10 @@ namespace TCPConn {
         /// \brief Send a message to the server.
         /// \param msg message to send
         void Send(const TCPRawMsg& msg) const;
+
+        /// \brief Send a raw msg to the server.
+        /// \param msg message to send
+        void Send(const uint8_t* raw_msg, uint32_t length) const;
 
         
         /// \brief Actively consume messages in the message queue.

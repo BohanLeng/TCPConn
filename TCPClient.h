@@ -2,8 +2,8 @@
 // Created by Bohan Leng on 7/2/2024.
 //
 
-#ifndef ZMONITOR_TCPCLIENT_H
-#define ZMONITOR_TCPCLIENT_H
+#ifndef TCPCONN_TCPCLIENT_H
+#define TCPCONN_TCPCLIENT_H
 
 #include "TCPConn.h"
 
@@ -64,4 +64,4 @@ namespace TCPConn {
 } // TCPConn
 
 
-#endif //ZMONITOR_TCPCLIENT_H
+#endif //TCPCONN_TCPCLIENT_H

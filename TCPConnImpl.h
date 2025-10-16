@@ -2,8 +2,8 @@
 // Created by Bohan Leng on 7/1/2024.
 //
 
-#ifndef ZMONITOR_TCPCONNIMPL_H
-#define ZMONITOR_TCPCONNIMPL_H
+#ifndef TCPCONN_TCPCONNIMPL_H
+#define TCPCONN_TCPCONNIMPL_H
 
 #include "TCPConn.h"
 #include <boost/asio.hpp>
@@ -81,4 +81,4 @@ namespace TCPConn {
 
 } // TCPConn
 
-#endif //ZMONITOR_TCPCONNIMPL_H
+#endif //TCPCONN_TCPCONNIMPL_H

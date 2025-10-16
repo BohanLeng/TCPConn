@@ -2,8 +2,8 @@
 // Created by Bohan Leng on 7/1/2024.
 //
 
-#ifndef ZMONITOR_TCPMSGQUEUE_H
-#define ZMONITOR_TCPMSGQUEUE_H
+#ifndef TCPCONN_TCPMSGQUEUE_H
+#define TCPCONN_TCPMSGQUEUE_H
 
 #include <deque>
 #include <mutex>
@@ -95,4 +95,4 @@ namespace TCPConn {
 
 } // TCPConn
 
-#endif //ZMONITOR_TCPMSGQUEUE_H
+#endif //TCPCONN_TCPMSGQUEUE_H

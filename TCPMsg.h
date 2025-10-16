@@ -2,8 +2,8 @@
 // Created by Bohan Leng on 7/1/2024.
 //
 
-#ifndef ZMONITOR_TCPMSG_H
-#define ZMONITOR_TCPMSG_H
+#ifndef TCPCONN_TCPMSG_H
+#define TCPCONN_TCPMSG_H
 
 #if defined _WIN32
 #   if defined TCPCONN_STATIC
@@ -195,4 +195,4 @@ namespace TCPConn {
 
 } // TCPCon
 
-#endif //ZMONITOR_TCPMSG_H
+#endif //TCPCONN_TCPMSG_H

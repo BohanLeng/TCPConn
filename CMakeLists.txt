@@ -1,6 +1,17 @@
 cmake_minimum_required(VERSION 3.20)
 
 project(TCPConn)
+set(CMAKE_CXX_STANDARD 20)
+
+if(APPLE)
+    set(OPERATING_SYSTEM "macOS")
+elseif(UNIX AND NOT APPLE)
+    set(OPERATING_SYSTEM "Linux")
+elseif(WIN32)
+    set(OPERATING_SYSTEM "Windows")
+else()
+    set(OPERATING_SYSTEM "Other")
+endif()
 
 add_library(${PROJECT_NAME} SHARED TCPConnImpl.cpp TCPClientImpl.cpp TCPServerImpl.cpp TCPRawMsgSenderImpl.cpp)
 target_compile_definitions(${PROJECT_NAME} PRIVATE TCPCONN_DLL)

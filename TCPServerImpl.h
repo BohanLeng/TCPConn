@@ -2,8 +2,8 @@
 // Created by Bohan Leng on 7/1/2024.
 //
 
-#ifndef ZMONITOR_TCPSERVERIMPL_H
-#define ZMONITOR_TCPSERVERIMPL_H
+#ifndef TCPCONN_TCPSERVERIMPL_H
+#define TCPCONN_TCPSERVERIMPL_H
 
 #include "TCPServer.h"
 #include <boost/asio.hpp>
@@ -46,4 +46,4 @@ namespace TCPConn {
 } // TCPConn
 
 
-#endif //ZMONITOR_TCPSERVERIMPL_H
+#endif //TCPCONN_TCPSERVERIMPL_H

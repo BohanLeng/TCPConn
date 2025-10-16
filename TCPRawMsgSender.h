@@ -2,8 +2,8 @@
 // Created by Bohan Leng on 19.07.2024.
 //
 
-#ifndef ZMONITOR_TCPRAWMSGSENDER_H
-#define ZMONITOR_TCPRAWMSGSENDER_H
+#ifndef TCPCONN_TCPRAWMSGSENDER_H
+#define TCPCONN_TCPRAWMSGSENDER_H
 
 #include "TCPMsg.h"
 #include "TCPMsgQueue.h"
@@ -92,4 +92,4 @@ namespace TCPConn {
 } // TCPConn
 
 
-#endif //ZMONITOR_TCPRAWMSGSENDER_H
+#endif //TCPCONN_TCPRAWMSGSENDER_H

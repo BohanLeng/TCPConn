@@ -2,8 +2,8 @@
 // Created by Bohan Leng on 7/1/2024.
 //
 
-#ifndef ZMONITOR_TCPCLIENTIMPL_H
-#define ZMONITOR_TCPCLIENTIMPL_H
+#ifndef TCPCONN_TCPCLIENTIMPL_H
+#define TCPCONN_TCPCLIENTIMPL_H
 
 #include "TCPClient.h"
 #include <boost/asio.hpp>
@@ -45,4 +45,4 @@ namespace TCPConn {
     
 } // TCPConn
 
-#endif //ZMONITOR_TCPCLIENTIMPL_H
+#endif //TCPCONN_TCPCLIENTIMPL_H

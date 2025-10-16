@@ -2,8 +2,8 @@
 // Created by Bohan Leng on 19.07.2024.
 //
 
-#ifndef ZMONITOR_TCPRAWMSGSENDERIMPL_H
-#define ZMONITOR_TCPRAWMSGSENDERIMPL_H
+#ifndef TCPCONN_TCPRAWMSGSENDERIMPL_H
+#define TCPCONN_TCPRAWMSGSENDERIMPL_H
 
 #include "TCPRawMsgSender.h"
 #include <boost/asio.hpp>
@@ -63,4 +63,4 @@ namespace TCPConn {
 
 } // TCPConn
 
-#endif //ZMONITOR_TCPRAWMSGSENDERIMPL_H
+#endif //TCPCONN_TCPRAWMSGSENDERIMPL_H

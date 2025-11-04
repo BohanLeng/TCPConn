@@ -26,8 +26,20 @@ if (WIN32)
     set(Boost_USE_MULTITHREAD ON)
     find_package(Boost REQUIRED system)
     target_include_directories(${PROJECT_NAME} PRIVATE ${Boost_INCLUDE_DIRS})
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${Boost_LIBRARIES} ws2_32)
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${Boost_LIBRARIES} ws2_32 mswsock)
 elseif (UNIX)
     find_package(Boost REQUIRED system)
     target_include_directories(${PROJECT_NAME} PRIVATE ${Boost_INCLUDE_DIRS})
 endif ()
+
+# pybind for python clients
+find_package(pybind11 REQUIRED)
+pybind11_add_module(tcpconn_py MODULE pybind_module.cpp)
+# Link against the core TCPConn library
+if (WIN32)
+    target_link_libraries(tcpconn_py PRIVATE TCPConn ${Boost_LIBRARIES} ws2_32)
+else()
+    target_link_libraries(tcpconn_py PRIVATE TCPConn ${Boost_LIBRARIES})
+endif()
+
+target_include_directories(tcpconn_py PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

@@ -8,6 +8,8 @@
 #include <sstream>
 #include <format>
 #include <iomanip>
+#include <chrono>
+#include <ctime>
 
 inline std::string CurrentTime() {
     auto now = std::chrono::system_clock::now();
